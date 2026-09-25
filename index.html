@@ -1,0 +1,3515 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Bitácora de Importaciones</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.0.4/dist/tesseract.min.js"></script>
+
+<style>
+  :root{
+    color-scheme: light;
+    --bg: #F5F7FA;
+    --surface: #FFFFFF;
+    --surface-2: #EDF1F5;
+    --surface-3: #E3E9EF;
+    --border: #D7DEE6;
+    --text: #16212C;
+    --text-muted: #5B6B7A;
+    --text-faint: #8A97A5;
+    --accent: #0E5C68;
+    --accent-strong: #0A4750;
+    --accent-soft: #DCEEF0;
+    --success: #1E8A4C;
+    --success-soft: #DEF3E4;
+    --success-strong:#12592F;
+    --warning: #A6710E;
+    --warning-soft: #FBEED2;
+    --warning-strong:#6E4A08;
+    --info: #2360AC;
+    --info-soft: #DCE9FB;
+    --info-strong:#173F73;
+    --neutral-stage: #5B6472;
+    --neutral-stage-soft: #E7E9EC;
+    --danger: #B23A2E;
+    --danger-soft: #F8DEDA;
+    --shadow: 0 1px 2px rgba(16,24,32,.06), 0 4px 14px rgba(16,24,32,.05);
+    --radius-s: 6px;
+    --radius-m: 10px;
+    --font-display: 'Space Grotesk', 'IBM Plex Sans', system-ui, sans-serif;
+    --font-body: 'IBM Plex Sans', system-ui, -apple-system, sans-serif;
+    --font-mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, monospace;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      color-scheme: dark;
+      --bg: #10161C;
+      --surface: #171F27;
+      --surface-2: #1D2731;
+      --surface-3: #26313C;
+      --border: #2F3B47;
+      --text: #E7EDF2;
+      --text-muted: #9FB0BE;
+      --text-faint: #6D7C8A;
+      --accent: #3FB6C4;
+      --accent-strong: #6FCBD6;
+      --accent-soft: #163841;
+      --success: #4BC17E;
+      --success-soft: #163828;
+      --success-strong:#8FE0B1;
+      --warning: #E0AC4C;
+      --warning-soft: #3B2E12;
+      --warning-strong:#F2CB84;
+      --info: #6FA6E8;
+      --info-soft: #16273F;
+      --info-strong:#A9C7F1;
+      --neutral-stage:#9AA5B1;
+      --neutral-stage-soft:#242C34;
+      --danger: #E17A6B;
+      --danger-soft: #3C1E1A;
+      --shadow: 0 1px 2px rgba(0,0,0,.4), 0 8px 20px rgba(0,0,0,.35);
+    }
+  }
+  :root[data-theme="dark"]{
+    color-scheme: dark;
+    --bg: #10161C;
+    --surface: #171F27;
+    --surface-2: #1D2731;
+    --surface-3: #26313C;
+    --border: #2F3B47;
+    --text: #E7EDF2;
+    --text-muted: #9FB0BE;
+    --text-faint: #6D7C8A;
+    --accent: #3FB6C4;
+    --accent-strong: #6FCBD6;
+    --accent-soft: #163841;
+    --success: #4BC17E;
+    --success-soft: #163828;
+    --success-strong:#8FE0B1;
+    --warning: #E0AC4C;
+    --warning-soft: #3B2E12;
+    --warning-strong:#F2CB84;
+    --info: #6FA6E8;
+    --info-soft: #16273F;
+    --info-strong:#A9C7F1;
+    --neutral-stage:#9AA5B1;
+    --neutral-stage-soft:#242C34;
+    --danger: #E17A6B;
+    --danger-soft: #3C1E1A;
+    --shadow: 0 1px 2px rgba(0,0,0,.4), 0 8px 20px rgba(0,0,0,.35);
+  }
+
+  *{box-sizing:border-box;}
+  html,body{height:100%;}
+  body{
+    margin:0; background:var(--bg); color:var(--text);
+    font-family:var(--font-body); font-size:14px; line-height:1.45;
+    padding-inline:0;
+  }
+  h1,h2,h3{font-family:var(--font-display); text-wrap:balance; margin:0; letter-spacing:-.01em;}
+  .mono{font-family:var(--font-mono); font-variant-numeric: tabular-nums;}
+  button{font-family:inherit; font-size:13px;}
+  input,select,textarea{font-family:inherit; font-size:13px; color:var(--text); background:var(--surface);}
+  a{color:var(--accent);}
+  ::-webkit-scrollbar{height:10px; width:10px;}
+  ::-webkit-scrollbar-thumb{background:var(--border); border-radius:8px;}
+
+  #app{display:flex; flex-direction:column; height:100%;}
+
+  header.topbar{
+    display:flex; align-items:center; gap:16px; flex-wrap:wrap;
+    padding:14px 20px; padding-top:calc(14px + env(safe-area-inset-top,0px));
+    background:var(--surface); border-bottom:1px solid var(--border);
+    position:sticky; top:0; z-index:40;
+  }
+  .brand{display:flex; align-items:center; gap:10px; margin-right:8px;}
+  .brand-mark{
+    width:34px; height:34px; border-radius:8px; background:var(--accent); color:#fff;
+    display:flex; align-items:center; justify-content:center; font-family:var(--font-display); font-weight:700; font-size:15px;
+    flex:none;
+  }
+  .brand-text h1{font-size:16px;}
+  .brand-text span{font-size:11px; color:var(--text-muted); display:block; margin-top:1px;}
+
+  nav.tabs{display:flex; gap:2px; flex-wrap:wrap; flex:1;}
+  nav.tabs button{
+    border:1px solid transparent; background:transparent; color:var(--text-muted);
+    padding:8px 12px; border-radius:var(--radius-s); cursor:pointer; font-weight:500;
+    white-space:nowrap;
+  }
+  nav.tabs button:hover{background:var(--surface-2); color:var(--text);}
+  nav.tabs button.active{background:var(--accent-soft); color:var(--accent-strong); font-weight:600;}
+
+  .topbar-actions{display:flex; align-items:center; gap:8px;}
+  .status-pill{
+    font-size:11px; padding:4px 9px; border-radius:99px; border:1px solid var(--border); color:var(--text-muted);
+    display:flex; align-items:center; gap:6px;
+  }
+  .dot{width:7px;height:7px;border-radius:50%;background:var(--success);}
+  .dot.bad{background:var(--danger);}
+  .dot.pending{background:var(--warning);}
+
+  main{flex:1; overflow:auto; padding:20px; padding-bottom:calc(28px + env(safe-area-inset-bottom,0px));}
+  .view{display:none; max-width:1400px; margin:0 auto; flex-direction:column; gap:18px;}
+  .view.active{display:flex;}
+
+  .kpi-row{display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:12px;}
+  .kpi{
+    background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-m);
+    padding:14px 16px; box-shadow:var(--shadow); display:flex; flex-direction:column; gap:6px;
+  }
+  .kpi .label{font-size:11px; text-transform:uppercase; letter-spacing:.06em; color:var(--text-muted); font-weight:600;}
+  .kpi .value{font-family:var(--font-display); font-size:24px; font-weight:700;}
+  .kpi .sub{font-size:11.5px; color:var(--text-faint);}
+  .kpi.accent-success .value{color:var(--success);}
+  .kpi.accent-warning .value{color:var(--warning);}
+  .kpi.accent-info .value{color:var(--info);}
+
+  .panel{
+    background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-m);
+    box-shadow:var(--shadow); overflow:hidden;
+  }
+  .panel-head{
+    display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;
+    padding:14px 16px; border-bottom:1px solid var(--border);
+  }
+  .panel-head h2{font-size:15px;}
+  .panel-head .desc{font-size:12px; color:var(--text-muted); margin-top:2px;}
+  .panel-body{padding:14px 16px;}
+  .panel-body.flush{padding:0;}
+
+  .toolbar{display:flex; align-items:center; gap:8px; flex-wrap:wrap;}
+  .btn{
+    display:inline-flex; align-items:center; gap:6px; border-radius:var(--radius-s);
+    border:1px solid var(--border); background:var(--surface); color:var(--text);
+    padding:7px 12px; cursor:pointer; font-weight:500; white-space:nowrap;
+  }
+  .btn:hover{background:var(--surface-2);}
+  .btn.primary{background:var(--accent); border-color:var(--accent); color:#fff;}
+  .btn.primary:hover{background:var(--accent-strong);}
+  .btn.danger{color:var(--danger); border-color:var(--danger-soft);}
+  .btn.danger:hover{background:var(--danger-soft);}
+  .btn.small{padding:5px 9px; font-size:12px;}
+  .btn:disabled{opacity:.5; cursor:not-allowed;}
+
+  input.field, select.field{
+    border:1px solid var(--border); border-radius:var(--radius-s); padding:7px 9px; background:var(--surface); color:var(--text);
+  }
+  input.field:focus, select.field:focus, textarea.field:focus{outline:2px solid var(--accent); outline-offset:1px;}
+
+  table.grid{border-collapse:collapse; width:100%; min-width:max-content;}
+  table.grid thead th{
+    position:sticky; top:0; background:var(--surface-2); text-align:left; font-size:11px;
+    text-transform:uppercase; letter-spacing:.05em; color:var(--text-muted); font-weight:600;
+    padding:9px 10px; border-bottom:1px solid var(--border); white-space:nowrap; z-index:2;
+  }
+  table.grid tbody td{
+    padding:6px 10px; border-bottom:1px solid var(--border); vertical-align:middle; font-size:13px;
+  }
+  table.grid tbody tr:hover td{background:var(--surface-2);}
+  table.grid tbody tr.row-selected td{background:var(--accent-soft);}
+  table.grid input.cell, table.grid select.cell{
+    border:1px solid transparent; background:transparent; width:100%; padding:5px 6px; border-radius:5px; color:var(--text);
+  }
+  table.grid input.cell:hover, table.grid select.cell:hover{border-color:var(--border);}
+  table.grid input.cell:focus, table.grid select.cell:focus{border-color:var(--accent); background:var(--surface); outline:none;}
+  .table-scroll{overflow:auto; max-height:62vh;}
+
+  /* Tabla de Liquidación Incoterm con columnas configurables (mostrar/ocultar) y
+     redimensionables (arrastrar el borde derecho del encabezado) -- a pedido de Juan Camilo. */
+  table.lq-resizable{table-layout:fixed;}
+  table.lq-resizable thead th{white-space:normal; overflow-wrap:break-word; line-height:1.3;}
+  table.lq-resizable tbody td{overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .col-resize-handle{
+    position:absolute; top:0; right:0; bottom:0; width:8px; cursor:col-resize; user-select:none; touch-action:none;
+  }
+  .col-resize-handle:hover, .col-resize-handle:active{background:var(--accent-soft);}
+
+  .badge{
+    display:inline-flex; align-items:center; gap:5px; padding:3px 9px; border-radius:99px;
+    font-size:11.5px; font-weight:600; white-space:nowrap;
+  }
+  .badge.success{background:var(--success-soft); color:var(--success-strong);}
+  .badge.warning{background:var(--warning-soft); color:var(--warning-strong);}
+  .badge.info{background:var(--info-soft); color:var(--info-strong);}
+  .badge.neutral{background:var(--neutral-stage-soft); color:var(--neutral-stage);}
+  .badge.danger{background:var(--danger-soft); color:var(--danger);}
+  .badge .dot{width:6px;height:6px;}
+
+  tr.row-success{box-shadow:inset 4px 0 0 var(--success);}
+  tr.row-warning{box-shadow:inset 4px 0 0 var(--warning);}
+  tr.row-info{box-shadow:inset 4px 0 0 var(--info);}
+  tr.row-neutral{box-shadow:inset 4px 0 0 var(--neutral-stage);}
+
+  .filters{display:flex; gap:8px; flex-wrap:wrap; align-items:center;}
+  .empty{padding:30px 16px; text-align:center; color:var(--text-faint); font-size:13px;}
+
+  .drop-zone{
+    border:2px dashed var(--border); border-radius:var(--radius-m); padding:30px 16px; text-align:center;
+    color:var(--text-muted); cursor:pointer; transition:border-color .15s, background .15s;
+  }
+  .drop-zone.drag{border-color:var(--accent); background:var(--accent-soft);}
+  .drop-zone strong{color:var(--text);}
+
+  .invoice-card{
+    border:1px solid var(--border); border-radius:var(--radius-m); padding:14px; background:var(--surface-2);
+    display:flex; flex-direction:column; gap:10px;
+  }
+  .invoice-card .row{display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:8px;}
+  .field-label{font-size:11px; text-transform:uppercase; letter-spacing:.04em; color:var(--text-muted); font-weight:600; margin-bottom:3px; display:block;}
+  .invoice-card .status-line{display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap;}
+  .confidence{font-size:11.5px; color:var(--text-faint);}
+
+  .waterfall{display:flex; flex-direction:column; gap:10px;}
+  .wf-row{display:grid; grid-template-columns:170px 1fr auto; gap:12px; align-items:center;}
+  .wf-label{font-size:12.5px; color:var(--text-muted); font-weight:600;}
+  .wf-track{background:var(--surface-3); border-radius:6px; height:20px; overflow:hidden; display:flex;}
+  .wf-fill{height:100%;}
+  .wf-value{font-family:var(--font-mono); font-size:13px; text-align:right; min-width:130px;}
+
+  .toast-wrap{position:fixed; bottom:18px; right:18px; display:flex; flex-direction:column; gap:8px; z-index:100;}
+  .toast{
+    background:var(--text); color:var(--bg); padding:10px 14px; border-radius:var(--radius-s); font-size:13px;
+    box-shadow:var(--shadow); max-width:320px;
+  }
+  .toast.err{background:var(--danger);}
+  .toast.ok{background:var(--success);}
+
+  .modal-backdrop{
+    position:fixed; inset:0; background:rgba(10,15,20,.45); display:flex; align-items:center; justify-content:center;
+    z-index:90; padding:20px;
+  }
+  .modal{
+    background:var(--surface); border-radius:var(--radius-m); border:1px solid var(--border); box-shadow:var(--shadow);
+    max-width:640px; width:100%; max-height:86vh; overflow:auto; padding:18px;
+  }
+  .modal h3{margin-bottom:10px;}
+  .grid2{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+  @media (max-width:640px){ .grid2{grid-template-columns:1fr;} }
+  .helptext{font-size:12px; color:var(--text-faint); margin-top:8px; line-height:1.5;}
+
+  footer.appfoot{padding:12px 20px; text-align:center; font-size:11.5px; color:var(--text-faint);}
+
+  /* Login / acceso -- a pedido de Juan Camilo (usuarios con Supabase Auth, roles admin/lectura) */
+  .auth-screen{position:fixed; inset:0; background:var(--bg); display:flex; align-items:center; justify-content:center; z-index:200; padding:20px;}
+  .auth-card{background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-m); box-shadow:var(--shadow); padding:28px; max-width:380px; width:100%;}
+  .auth-card .brand-mark{margin:0 auto 14px}
+  .auth-card h1{font-size:19px; text-align:center; margin-bottom:4px;}
+  .auth-card .auth-sub{color:var(--text-muted); font-size:13px; margin-bottom:16px; text-align:center;}
+  .auth-card label.field-label{display:block}
+  .auth-card input.field{width:100%}
+</style>
+</head>
+<body>
+
+<div id="authScreen" class="auth-screen" style="display:none"></div>
+
+<div id="app" style="display:none">
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark">IM</div>
+      <div class="brand-text">
+        <h1>Bitácora de Importaciones</h1>
+        <span>Seguimiento, costeo Incoterm y facturación</span>
+      </div>
+    </div>
+    <nav class="tabs" id="tabNav">
+      <button data-view="resumen" class="active">Resumen</button>
+      <button data-view="embarques">Seguimiento de Embarques</button>
+      <button data-view="financiero">Control Financiero</button>
+      <button data-view="incoterm">Liquidación Incoterm</button>
+      <button data-view="facturas">Importar Facturas</button>
+      <button data-view="proveedores">Proveedores y Conceptos</button>
+      <button data-view="lecturadi">Lectura DI</button>
+      <button data-view="usuarios" id="navUsuarios" style="display:none">Configuración</button>
+    </nav>
+    <div class="topbar-actions">
+      <span class="status-pill" id="connStatus"><span class="dot pending"></span> Conectando…</span>
+      <span class="badge neutral" id="userBadge" style="display:none"></span>
+      <button class="btn small" id="refreshBtn" title="Actualizar los datos desde Supabase" style="display:none">⟳ Actualizar</button>
+      <button class="btn small" id="signOutBtn" style="display:none">Cerrar sesión</button>
+    </div>
+  </header>
+
+  <main id="main">
+    <!-- RESUMEN -->
+    <section class="view active" id="view-resumen"></section>
+    <!-- EMBARQUES -->
+    <section class="view" id="view-embarques"></section>
+    <!-- FINANCIERO -->
+    <section class="view" id="view-financiero"></section>
+    <!-- INCOTERM -->
+    <section class="view" id="view-incoterm"></section>
+    <!-- FACTURAS -->
+    <section class="view" id="view-facturas"></section>
+    <!-- PROVEEDORES -->
+    <section class="view" id="view-proveedores"></section>
+    <section class="view" id="view-lecturadi"></section>
+    <!-- USUARIOS (solo admin) -->
+    <section class="view" id="view-usuarios"></section>
+  </main>
+
+  <footer class="appfoot">Datos almacenados en Supabase · Los cálculos de arancel/IVA/liquidación son de apoyo — verifícalos contra tus documentos de nacionalización.</footer>
+</div>
+
+<div class="toast-wrap" id="toastWrap"></div>
+<div id="modalRoot"></div>
+
+<script>
+/* ============================================================
+   CONFIG
+   ============================================================ */
+const SUPABASE_URL = "https://zmgitsmngdjpacvrxfkx.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InptZ2l0c21uZ2RqcGFjdnJ4Zmt4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMzNzE5MzUsImV4cCI6MjA5ODk0NzkzNX0.8ZcQB0LCbClGtoPnIXqAT5NAzb4b6CKEcO8TzyKm2c0";
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+const BUCKET = "impo-facturas";
+const BUCKET_DI = "impo-lecturas-di";
+
+const ESTADO_IMPO_OPTS = ["Espera de reserva","Reserva confirmada","Emisión pendiente","En tránsito","En puerto","Nacionalización","Entregado","Cerrado"];
+const ESTADO_PAGO_OPTS = ["Pendiente","Cancelado"];
+const INCOTERM_OPTS = ["EXW","FCA","FAS","FOB","CFR","CIF","CPT","CIP","DAP","DPU","DDP"];
+const ETAPA_INCOTERM_OPTS = [
+  "Origen (EXW-FCA)",
+  "Flete Internacional (FOB-CIF)",
+  "Puerto Destino / Nacionalización (CIF-DAP-DDP)",
+  "Transporte Interno / Entrega Final (DDP)"
+];
+const SUCURSAL_OPTS = ["GP","GPA","GPO","GPM","CTG","MP","BOOM","VIPC","VIPI","SIN ASIGNAR","MCHC","GPY"];
+
+// Cruce automático Control Financiero -> Liquidación Incoterm. Cada factura/rubro de BD
+// Importaciones se clasifica en uno de estos dos tipos:
+//  - "mercancia": la factura comercial del proveedor de la mercancía (FOB/Flete/Seguro en
+//    USD) -> alimenta impo_datos_mercancia.
+//  - "servicio": una factura de costo/servicio de importación en Colombia (naviera, agencia
+//    de aduanas, transporte, bancos) -> alimenta un rubro puntual de impo_costo_mercancia,
+//    indicado en RUBRO_COSTO_MERCANCIA_OPTS (debe coincidir exactamente con una columna real
+//    de esa tabla). Una factura de servicio sin rubro asignado NO se suma automáticamente.
+const TIPO_FACTURA_OPTS = [
+  {value:'servicio', label:'Servicio / costo de importación'},
+  {value:'mercancia', label:'Mercancía (factura comercial del proveedor)'},
+];
+const RUBRO_COSTO_MERCANCIA_OPTS = [
+  {value:'arancel', label:'Arancel'},
+  {value:'iva', label:'IVA (nacionalización)'},
+  {value:'sanciones', label:'Sanciones'},
+  {value:'flete_internacional', label:'Flete internacional (factura)'},
+  {value:'servicios_jas', label:'Servicios agente (aduanas)'},
+  {value:'puerto_alm_reconocimiento', label:'Puerto / Almacenaje / Reconocimiento'},
+  {value:'flete_terrestre', label:'Flete terrestre'},
+  {value:'gtos_bancarios_4x1000', label:'4x1000 / Gastos bancarios'},
+  {value:'costo_logistica_cta_impo', label:'Costo logística - Cta Impo'},
+  {value:'gtos_cofa', label:'Gastos COFA'},
+];
+const RUBRO_COSTO_MERCANCIA_LABEL = Object.fromEntries(RUBRO_COSTO_MERCANCIA_OPTS.map(o=>[o.value,o.label]));
+
+// Mapeo de color por estado de importación (verde=finalizado, amarillo=puerto, azul=tránsito, gris=pre-embarque)
+const ESTADO_COLOR = {
+  "Espera de reserva": "neutral",
+  "Reserva confirmada": "neutral",
+  "Emisión pendiente": "neutral",
+  "En tránsito": "info",
+  "En puerto": "warning",
+  "Nacionalización": "warning",
+  "Entregado": "success",
+  "Cerrado": "success",
+};
+
+const money = (n, decimals=0) => {
+  n = Number(n)||0;
+  return n.toLocaleString('es-CO', {minimumFractionDigits:decimals, maximumFractionDigits:decimals});
+};
+const moneyUSD = (n) => "US$ " + Number(n||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+const moneyCOP = (n) => "$ " + money(n,0);
+const fmtDate = (d) => {
+  if(!d) return "";
+  const dt = new Date(d+"T00:00:00");
+  if(isNaN(dt)) return d;
+  return dt.toLocaleDateString('es-CO', {day:'2-digit',month:'short',year:'numeric'});
+};
+const todayISO = () => new Date().toISOString().slice(0,10);
+const daysBetween = (a,b) => Math.round((new Date(b) - new Date(a)) / 86400000);
+
+// TRM (tasa representativa del mercado) editable por el usuario, por BL — se guarda en
+// impo_datos_mercancia.trm. Se usa para poder ver la liquidación de cada importación tanto
+// en COP como en USD, sin asumir una TRM global: cada BL puede tener la suya (fecha de giro
+// distinta, factura distinta, etc.).
+function getTrmForBl(bl){
+  const dm = STATE.datosMercancia.find(r=>r.bl===bl);
+  return dm ? Number(dm.trm||0) : 0;
+}
+// Muestra un valor en COP convirtiéndolo a USD con la TRM del BL cuando currency==='USD'.
+// Si el BL no tiene TRM cargada, se avisa en vez de inventar un valor.
+function moneyDual(valueCOP, trm, currency){
+  if(currency === 'USD'){
+    if(!trm) return `<span style="color:var(--text-muted)" title="Este BL no tiene TRM cargada todavía">— (sin TRM)</span>`;
+    return moneyUSD(Number(valueCOP||0) / trm);
+  }
+  return moneyCOP(valueCOP);
+}
+function currencyToggleHtml(id, current){
+  return `<div class="seg" id="${id}" style="display:inline-flex;border:1px solid var(--border);border-radius:8px;overflow:hidden">
+    <button type="button" class="seg-btn${current==='COP'?' active':''}" data-currency="COP" style="padding:5px 12px;font-size:12px;border:none;cursor:pointer;background:${current==='COP'?'var(--accent)':'transparent'};color:${current==='COP'?'#fff':'inherit'}">COP</button>
+    <button type="button" class="seg-btn${current==='USD'?' active':''}" data-currency="USD" style="padding:5px 12px;font-size:12px;border:none;cursor:pointer;background:${current==='USD'?'var(--accent)':'transparent'};color:${current==='USD'?'#fff':'inherit'}">USD</button>
+  </div>`;
+}
+
+function debounce(fn, ms){
+  let t;
+  return (...args) => { clearTimeout(t); t = setTimeout(()=>fn(...args), ms); };
+}
+
+function toast(msg, type=""){
+  const wrap = document.getElementById('toastWrap');
+  const el = document.createElement('div');
+  el.className = 'toast ' + type;
+  el.textContent = msg;
+  wrap.appendChild(el);
+  setTimeout(()=>{ el.style.opacity='0'; el.style.transition='opacity .3s'; setTimeout(()=>el.remove(),300); }, 3400);
+}
+
+function setConn(ok, msg){
+  const el = document.getElementById('connStatus');
+  el.innerHTML = `<span class="dot ${ok?'':'bad'}"></span> ${msg}`;
+}
+
+function esc(s){
+  if(s===null||s===undefined) return "";
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function openModal(html){
+  const root = document.getElementById('modalRoot');
+  root.innerHTML = `<div class="modal-backdrop" id="__modalBackdrop"><div class="modal">${html}</div></div>`;
+  document.getElementById('__modalBackdrop').addEventListener('click', (e)=>{
+    if(e.target.id==='__modalBackdrop') closeModal();
+  });
+}
+function closeModal(){ document.getElementById('modalRoot').innerHTML = ""; }
+
+/* ============================================================
+   ACCESO — Supabase Auth con dos roles (admin / lectura), a pedido de
+   Juan Camilo. Un usuario de Auth solo entra a esta app si tiene una fila
+   en impo_perfiles (puede tener cuenta en este mismo proyecto de Supabase
+   por otra app de Multigrupo sin tener acceso a Bitácora de Importaciones).
+   La creación/eliminación de usuarios se hace siempre a través de la Edge
+   Function "impo-gestion-usuarios" (nunca con la service_role key en este
+   archivo, que cualquiera que lo descargue podría leer).
+   ============================================================ */
+let CURRENT_USER = null; // {id, email, rol} una vez autenticado y verificado
+const EDGE_FN_GESTION_USUARIOS = `${SUPABASE_URL}/functions/v1/impo-gestion-usuarios`;
+
+function isAdminUser(){ return !!(CURRENT_USER && CURRENT_USER.rol === 'admin'); }
+function isReadOnly(){ return !!(CURRENT_USER && CURRENT_USER.rol !== 'admin'); }
+
+async function callGestionUsuarios(payload){
+  const {data:{session}} = await sb.auth.getSession();
+  if(!session) throw new Error('No hay sesión activa');
+  const res = await fetch(EDGE_FN_GESTION_USUARIOS, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + session.access_token,
+      'apikey': SUPABASE_ANON_KEY,
+    },
+    body: JSON.stringify(payload),
+  });
+  let body;
+  try{ body = await res.json(); }catch(e){ body = {error:'Respuesta inválida del servidor'}; }
+  if(!res.ok) throw new Error(body.error || ('Error '+res.status));
+  return body;
+}
+
+function renderLoginForm(errorMsg){
+  return `
+    <div class="auth-card">
+      <div class="brand-mark">IM</div>
+      <h1>Bitácora de Importaciones</h1>
+      <p class="auth-sub">Inicia sesión para continuar</p>
+      <form id="authLoginForm">
+        <label class="field-label">Correo</label>
+        <input class="field" type="email" id="authEmail" required autocomplete="username">
+        <label class="field-label" style="margin-top:10px">Contraseña</label>
+        <input class="field" type="password" id="authPassword" required autocomplete="current-password">
+        <button class="btn primary" type="submit" style="width:100%;margin-top:16px">Iniciar sesión</button>
+      </form>
+      ${errorMsg ? `<p class="helptext" style="color:var(--danger)">${esc(errorMsg)}</p>` : ''}
+      <p class="helptext" style="margin-top:18px">¿No tienes cuenta? Pide a un administrador de esta app que te la cree desde Configuración → Usuarios.</p>
+    </div>
+  `;
+}
+
+function renderDeniedScreen(email){
+  return `
+    <div class="auth-card">
+      <div class="brand-mark">IM</div>
+      <h1>Acceso no habilitado</h1>
+      <p class="auth-sub">La cuenta <strong>${esc(email)}</strong> existe, pero todavía no tiene acceso a Bitácora de Importaciones.</p>
+      <p class="helptext">Pide a un administrador que te agregue desde Configuración → Usuarios.</p>
+      <button class="btn" id="authSignOutBtn" style="width:100%;margin-top:14px">Cerrar sesión</button>
+    </div>
+  `;
+}
+
+function showAuthScreen(kind, data={}){
+  document.getElementById('app').style.display = 'none';
+  const el = document.getElementById('authScreen');
+  el.style.display = 'flex';
+  if(kind === 'denied'){
+    el.innerHTML = renderDeniedScreen(data.email || '');
+    document.getElementById('authSignOutBtn').addEventListener('click', doSignOut);
+    return;
+  }
+  el.innerHTML = renderLoginForm(data.error);
+  document.getElementById('authLoginForm').addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    const email = document.getElementById('authEmail').value.trim();
+    const password = document.getElementById('authPassword').value;
+    const btn = e.target.querySelector('button[type="submit"]');
+    btn.disabled = true; btn.textContent = 'Ingresando…';
+    const {error} = await sb.auth.signInWithPassword({email, password});
+    if(error){
+      showAuthScreen('login', {error: 'No se pudo iniciar sesión: ' + error.message});
+      return;
+    }
+    await bootAfterAuth();
+  });
+}
+
+async function doSignOut(){
+  await sb.auth.signOut();
+  CURRENT_USER = null;
+  showAuthScreen('login');
+}
+
+function showApp(){
+  document.getElementById('authScreen').style.display = 'none';
+  document.getElementById('app').style.display = '';
+}
+
+function renderUserChrome(){
+  const badge = document.getElementById('userBadge');
+  badge.style.display = '';
+  badge.textContent = `${CURRENT_USER.email} · ${CURRENT_USER.rol==='admin' ? 'Administrador' : 'Solo lectura'}`;
+  badge.className = 'badge ' + (CURRENT_USER.rol==='admin' ? 'info' : 'neutral');
+  document.getElementById('navUsuarios').style.display = isAdminUser() ? '' : 'none';
+  const refreshBtn = document.getElementById('refreshBtn');
+  refreshBtn.style.display = '';
+  if(!refreshBtn.dataset.wired){
+    refreshBtn.dataset.wired = '1';
+    refreshBtn.addEventListener('click', async ()=>{
+      refreshBtn.disabled = true;
+      try{
+        await refreshAll();
+        setConn(true, `Conectado · ${STATE.embarques.length} embarques`);
+        const activeBtn = document.querySelector('nav.tabs button.active');
+        if(activeBtn) activateView(activeBtn.dataset.view);
+        toast('Datos actualizados','ok');
+      }catch(err){
+        console.error(err);
+        toast('No se pudo actualizar: '+err.message, 'err');
+      }finally{
+        refreshBtn.disabled = false;
+      }
+    });
+  }
+  const signOutBtn = document.getElementById('signOutBtn');
+  signOutBtn.style.display = '';
+  if(!signOutBtn.dataset.wired){
+    signOutBtn.dataset.wired = '1';
+    signOutBtn.addEventListener('click', async ()=>{
+      if(!confirm('¿Cerrar sesión?')) return;
+      await doSignOut();
+    });
+  }
+}
+
+/* Bloqueo de escritura para rol "lectura": deshabilita los campos editables de
+   las grillas (input.cell/select.cell), el detalle de Liquidación Incoterm
+   (data-lqtable) y los botones de crear/importar/eliminar/guardar más
+   relevantes. Es una ayuda de interfaz -- el límite real y autoritativo es la
+   política RLS en Supabase (un usuario de solo lectura no puede escribir aunque
+   algún campo se escape de este bloqueo; en ese caso vería el error de la base
+   de datos al intentar guardar, nunca una escritura silenciosa). Se reaplica
+   automáticamente después de cada repintado con un MutationObserver, porque
+   las vistas regeneran su HTML por dentro (no solo al cambiar de pestaña).
+   ============================================================ */
+function lockReadOnlyUI(){
+  if(!isReadOnly()) return;
+  document.querySelectorAll('#main input.cell, #main select.cell, #main textarea.cell, #main [data-lqtable], #modalRoot input.cell, #modalRoot select.cell, #modalRoot [data-lqtable]').forEach(el=>{
+    el.disabled = true;
+  });
+  document.querySelectorAll('[data-action="del-emb"], [data-action="del-bd"], [data-action="del-prov"], [data-action="guardar-pdf"], [data-action="descartar-pdf"], [data-action="guardar-di"], [data-action="descartar-di"], [data-action="del-di"]').forEach(el=>{
+    el.disabled = true; el.title = 'Tu usuario es de solo lectura';
+  });
+  ['embAddRow','embImportBtn','embImportFile','bdAddRow','provAdd','lqAdd','lqDeleteBL','lqNewConfirm','diAddItemRow'].forEach(id=>{
+    const el = document.getElementById(id);
+    if(el){ el.disabled = true; el.title = 'Tu usuario es de solo lectura'; }
+  });
+  ['pdfDrop','diDrop'].forEach(id=>{
+    const dropZone = document.getElementById(id);
+    if(dropZone){ dropZone.style.opacity = '0.5'; dropZone.style.pointerEvents = 'none'; }
+  });
+  ['pdfInput','diInput'].forEach(id=>{
+    const input = document.getElementById(id);
+    if(input) input.disabled = true;
+  });
+}
+
+let readOnlyObserver = null;
+function startReadOnlyGuard(){
+  if(!isReadOnly()) return;
+  lockReadOnlyUI();
+  if(readOnlyObserver) return;
+  readOnlyObserver = new MutationObserver(()=>{ lockReadOnlyUI(); });
+  const main = document.getElementById('main');
+  const modalRoot = document.getElementById('modalRoot');
+  if(main) readOnlyObserver.observe(main, {childList:true, subtree:true});
+  if(modalRoot) readOnlyObserver.observe(modalRoot, {childList:true, subtree:true});
+}
+
+async function bootAfterAuth(){
+  const {data:{session}} = await sb.auth.getSession();
+  if(!session){ showAuthScreen('login'); return; }
+  const {data:perfil, error} = await sb.from('impo_perfiles').select('id,email,rol').eq('id', session.user.id).maybeSingle();
+  if(error){
+    showAuthScreen('login', {error: 'No se pudo verificar tu acceso: ' + error.message});
+    return;
+  }
+  if(!perfil){
+    showAuthScreen('denied', {email: session.user.email});
+    return;
+  }
+  CURRENT_USER = perfil;
+  showApp();
+  renderUserChrome();
+  try{
+    await refreshAll();
+    setConn(true, `Conectado · ${STATE.embarques.length} embarques`);
+  }catch(err){
+    console.error(err);
+    setConn(false, 'Sin conexión a la base de datos');
+    toast('No se pudo conectar a Supabase: '+err.message, 'err');
+  }
+  activateView('resumen');
+  startReadOnlyGuard();
+}
+
+/* ============================================================
+   DATA LAYER — helpers thin wrappers over supabase-js
+   ============================================================ */
+const DB = {
+  async list(table, {order=null, ascending=true} = {}){
+    let q = sb.from(table).select('*');
+    if(order) q = q.order(order, {ascending});
+    const {data, error} = await q;
+    if(error){ toast('Error cargando '+table+': '+error.message, 'err'); console.error(error); return []; }
+    return data || [];
+  },
+  async insert(table, row){
+    const {data, error} = await sb.from(table).insert(row).select();
+    if(error){ toast('Error creando registro: '+error.message, 'err'); console.error(error); return null; }
+    return data[0];
+  },
+  async update(table, id, patch){
+    const {data, error} = await sb.from(table).update(patch).eq('id', id).select();
+    if(error){ toast('Error guardando: '+error.message, 'err'); console.error(error); return null; }
+    return data && data[0];
+  },
+  async remove(table, id){
+    const {error} = await sb.from(table).delete().eq('id', id);
+    if(error){ toast('Error eliminando: '+error.message, 'err'); console.error(error); return false; }
+    return true;
+  }
+};
+
+/* Global in-memory cache, re-fetched per view */
+const STATE = {
+  embarques: [],
+  bdImportaciones: [],
+  proveedores: [],
+  facturas: [],
+  datosMercancia: [],
+  costoMercancia: [],
+  lecturasDi: [],
+  lecturasDiItems: [],
+};
+
+/* ============================================================
+   ALERTA DE LLEGADA — replica la fórmula de ESTADO_DE_IMP.xlsm
+   =IF(ETA="","SIN FECHA ETA",
+      IF(dias<0,"LLEGADA CUMPLIDA",
+      IF(dias<=5,"ALERTA 5 DÍAS", IF(dias<=10,"ALERTA 10 DÍAS",
+      IF(dias<=15,"ALERTA 15 DÍAS", IF(dias<=20,"ALERTA 20 DÍAS","EN TRÁNSITO"))))))
+   ============================================================ */
+function alertaLlegada(fechaArribo){
+  if(!fechaArribo) return {label:"SIN FECHA ETA", cls:"neutral", dias:null};
+  const dias = daysBetween(todayISO(), fechaArribo);
+  if(dias < 0) return {label:"LLEGADA CUMPLIDA", cls:"success", dias};
+  if(dias <= 5) return {label:`ALERTA 5 DÍAS (${dias}d)`, cls:"danger", dias};
+  if(dias <= 10) return {label:`ALERTA 10 DÍAS (${dias}d)`, cls:"warning", dias};
+  if(dias <= 15) return {label:`ALERTA 15 DÍAS (${dias}d)`, cls:"warning", dias};
+  if(dias <= 20) return {label:`ALERTA 20 DÍAS (${dias}d)`, cls:"info", dias};
+  return {label:"EN TRÁNSITO", cls:"info", dias};
+}
+
+/* ============================================================
+   NAVEGACIÓN DE PESTAÑAS
+   ============================================================ */
+const VIEWS = {};   // viewname -> render function
+function activateView(name){
+  document.querySelectorAll('nav.tabs button').forEach(b => b.classList.toggle('active', b.dataset.view===name));
+  document.querySelectorAll('.view').forEach(v => v.classList.toggle('active', v.id === 'view-'+name));
+  if(VIEWS[name]) VIEWS[name]();
+}
+document.getElementById('tabNav').addEventListener('click', (e)=>{
+  const btn = e.target.closest('button[data-view]');
+  if(!btn) return;
+  activateView(btn.dataset.view);
+});
+
+/* ============================================================
+   BOOTSTRAP
+   ============================================================ */
+async function refreshAll(){
+  const [embarques, bd, prov, fact, dm, cm, lecturasDi, lecturasDiItems] = await Promise.all([
+    DB.list('impo_embarques', {order:'fecha_arribo'}),
+    DB.list('impo_bd_importaciones', {order:'fecha'}),
+    DB.list('impo_proveedores_conceptos', {order:'proveedor'}),
+    DB.list('impo_facturas', {order:'created_at'}),
+    DB.list('impo_datos_mercancia', {order:'bl'}),
+    DB.list('impo_costo_mercancia', {order:'bl'}),
+    DB.list('impo_lecturas_di', {order:'created_at'}),
+    DB.list('impo_lecturas_di_items', {order:'orden'}),
+  ]);
+  STATE.embarques = embarques;
+  STATE.bdImportaciones = bd;
+  STATE.proveedores = prov;
+  STATE.facturas = fact;
+  STATE.datosMercancia = dm;
+  STATE.costoMercancia = cm;
+  STATE.lecturasDi = lecturasDi;
+  STATE.lecturasDiItems = lecturasDiItems;
+}
+
+async function init(){
+  sb.auth.onAuthStateChange((event)=>{
+    if(event === 'SIGNED_OUT'){
+      CURRENT_USER = null;
+      showAuthScreen('login');
+    }
+  });
+  const {data:{session}} = await sb.auth.getSession();
+  if(session){
+    await bootAfterAuth();
+  } else {
+    showAuthScreen('login');
+  }
+}
+</script>
+
+<script>
+/* ============================================================
+   VISTA: RESUMEN
+   ============================================================ */
+/* Filtro de rango de fechas del Resumen. Se conserva entre repintados/cambios de
+   pestaña dentro de la misma sesión del navegador (no se guarda en la base de datos). */
+let resumenDateField = 'fecha_arribo';
+let resumenDesde = '';
+let resumenHasta = '';
+
+function inDateRange(dateStr, desde, hasta){
+  if(!dateStr) return false;
+  if(desde && dateStr < desde) return false;
+  if(hasta && dateStr > hasta) return false;
+  return true;
+}
+
+VIEWS.resumen = function(){
+  const el = document.getElementById('view-resumen');
+  el.innerHTML = `
+    <div class="panel">
+      <div class="panel-head">
+        <div><h2>Filtrar por rango de fechas</h2><div class="desc">Filtra los embarques por ETD o ETA. Valor CIF, Costos, Arancel/IVA/Tributos Aduaneros se filtran por los BL de esos embarques; los Rubros BD Importaciones y facturas con pago pendiente se filtran por su propia fecha de factura.</div></div>
+        <div class="toolbar">
+          <select class="field" id="resumenDateField">
+            <option value="fecha_arribo">ETA llegada</option>
+            <option value="fecha_zarpe">ETD salida</option>
+          </select>
+          <input type="date" class="field" id="resumenDesde">
+          <span style="color:var(--text-muted)">—</span>
+          <input type="date" class="field" id="resumenHasta">
+          <button class="btn" id="resumenClearFilter">Limpiar filtro</button>
+          <span style="font-size:12px;color:var(--text-muted)" id="resumenFilterCount"></span>
+        </div>
+      </div>
+    </div>
+    <div id="resumenContent"></div>
+  `;
+
+  const dateFieldSel = document.getElementById('resumenDateField');
+  const desdeInput = document.getElementById('resumenDesde');
+  const hastaInput = document.getElementById('resumenHasta');
+  dateFieldSel.value = resumenDateField;
+  desdeInput.value = resumenDesde;
+  hastaInput.value = resumenHasta;
+
+  function paint(){
+    const content = document.getElementById('resumenContent');
+    const emb = STATE.embarques;
+    const filterActive = !!(resumenDesde || resumenHasta);
+    const embF = filterActive ? emb.filter(e => inDateRange(e[resumenDateField], resumenDesde, resumenHasta)) : emb;
+    const blSetF = new Set(embF.map(e=>e.bl).filter(Boolean));
+    const dmF = filterActive ? STATE.datosMercancia.filter(r=>blSetF.has(r.bl)) : STATE.datosMercancia;
+    const cmF = filterActive ? STATE.costoMercancia.filter(r=>blSetF.has(r.bl)) : STATE.costoMercancia;
+    const bdF = filterActive ? STATE.bdImportaciones.filter(r=>inDateRange(r.fecha, resumenDesde, resumenHasta)) : STATE.bdImportaciones;
+
+    document.getElementById('resumenFilterCount').textContent = filterActive
+      ? `${embF.length} de ${emb.length} embarques en el rango`
+      : '';
+
+    const activos = embF.filter(e => !['Entregado','Cerrado'].includes(e.estado_impo));
+    const enTransito = embF.filter(e => e.estado_impo === 'En tránsito').length;
+    const enPuerto = embF.filter(e => ['En puerto','Nacionalización'].includes(e.estado_impo)).length;
+    const finalizados = embF.filter(e => ['Entregado','Cerrado'].includes(e.estado_impo)).length;
+    const preEmbarque = embF.filter(e => ['Espera de reserva','Reserva confirmada','Emisión pendiente'].includes(e.estado_impo)).length;
+
+    const alertas = embF
+      .map(e => ({e, a: alertaLlegada(e.fecha_arribo)}))
+      .filter(x => x.a.dias !== null && x.a.dias <= 10 && x.a.dias >= 0)
+      .sort((a,b)=>a.a.dias-b.a.dias);
+
+    const totalGranTotalBD = bdF.reduce((s,r)=>s+Number(r.gran_total||0),0);
+    const totalCostoMercancia = cmF.reduce((s,r)=>s+Number(r.gran_total||0),0);
+    const totalValorCIF = dmF.reduce((s,r)=>s+Number(r.valor_total_mercancia_cop||0),0);
+    const pendientesPago = bdF.filter(r=>r.estado_pago==='Pendiente').length;
+    const totalArancel = cmF.reduce((s,r)=>s+Number(r.arancel||0),0);
+    const totalIvaImpo = cmF.reduce((s,r)=>s+Number(r.iva||0),0);
+    const totalTributosAduaneros = totalArancel + totalIvaImpo;
+    const nConTributos = cmF.filter(r=>Number(r.arancel||0) || Number(r.iva||0)).length;
+
+    // Costo Total Logístico Impo, % LOG IMPO, y las dos variantes de Costo total importación
+    // (a pedido de Juan Camilo, ya presentes como columnas en Liquidación Incoterm) se acumulan
+    // aquí por BL con la misma fórmula que liquidacionTotales(), usando el universo de BL que
+    // quedó dentro del filtro de fechas (dmF/cmF). "% LOG IMPO" acumulado se calcula como suma
+    // de Costo Total Logístico Impo ÷ suma de Valor FOB (promedio ponderado por el tamaño de
+    // cada importación) -- no como promedio simple de los porcentajes de cada BL, que le daría
+    // el mismo peso a un BL pequeño que a uno grande y distorsionaría el indicador.
+    const lqBlsResumen = new Set([...dmF.map(r=>r.bl), ...cmF.map(r=>r.bl)].filter(Boolean));
+    let totalCostoLogisticoImpo = 0, totalValorFOBParaPct = 0, totalCostoImportacionConIVA = 0, totalCostoImportacionNetoSinIVA = 0;
+    lqBlsResumen.forEach(bl=>{
+      const t = liquidacionTotales(bl);
+      totalCostoLogisticoImpo += t.costoTotalLogisticoImpo;
+      totalValorFOBParaPct += t.valorFOB;
+      totalCostoImportacionConIVA += t.totalImportacion;
+      totalCostoImportacionNetoSinIVA += t.totalImportacionNeto;
+    });
+    const pctLogImpoAcumulado = totalValorFOBParaPct ? (totalCostoLogisticoImpo / totalValorFOBParaPct * 100) : null;
+
+    content.innerHTML = `
+    <div class="kpi-row">
+      <div class="kpi"><span class="label">Embarques activos</span><span class="value">${activos.length}</span><span class="sub">de ${embF.length} ${filterActive?'en el rango':'totales'}</span></div>
+      <div class="kpi accent-info"><span class="label">En tránsito</span><span class="value">${enTransito}</span><span class="sub">navegación internacional</span></div>
+      <div class="kpi accent-warning"><span class="label">En puerto / nacionalización</span><span class="value">${enPuerto}</span><span class="sub">gestión local</span></div>
+      <div class="kpi accent-success"><span class="label">Entregados / cerrados</span><span class="value">${finalizados}</span><span class="sub">${preEmbarque} en pre-embarque</span></div>
+    </div>
+    <div class="kpi-row">
+      <div class="kpi"><span class="label">Valor CIF acumulado</span><span class="value mono" style="font-size:18px">${moneyCOP(totalValorCIF)}</span><span class="sub">${dmF.length} embarques con datos de mercancía</span></div>
+      <div class="kpi"><span class="label">Costos nacionaliz.+logística</span><span class="value mono" style="font-size:18px">${moneyCOP(totalCostoMercancia)}</span><span class="sub">hoja Costo_Mercancia</span></div>
+      <div class="kpi"><span class="label">Rubros BD Importaciones</span><span class="value mono" style="font-size:18px">${moneyCOP(totalGranTotalBD)}</span><span class="sub">${bdF.length} facturas registradas</span></div>
+      <div class="kpi accent-warning"><span class="label">Facturas con pago pendiente</span><span class="value">${pendientesPago}</span><span class="sub">de ${bdF.length} registradas</span></div>
+    </div>
+    <div class="kpi-row">
+      <div class="kpi"><span class="label">Arancel acumulado</span><span class="value mono" style="font-size:18px">${moneyCOP(totalArancel)}</span><span class="sub">hoja Costo_Mercancia</span></div>
+      <div class="kpi"><span class="label">IVA acumulado</span><span class="value mono" style="font-size:18px">${moneyCOP(totalIvaImpo)}</span><span class="sub">hoja Costo_Mercancia</span></div>
+      <div class="kpi accent-warning"><span class="label">Tributos aduaneros (Arancel + IVA)</span><span class="value mono" style="font-size:18px">${moneyCOP(totalTributosAduaneros)}</span><span class="sub">${nConTributos} embarques con arancel/IVA cargado</span></div>
+    </div>
+    <div class="kpi-row">
+      <div class="kpi"><span class="label">Costo Total Logístico Impo</span><span class="value mono" style="font-size:18px">${moneyCOP(totalCostoLogisticoImpo)}</span><span class="sub">Flete+Seguro, Puerto/Alm., Servicios JAS, Flete Terrestre, Log-Cta Impo y Gtos COFA</span></div>
+      <div class="kpi"><span class="label">% LOG IMPO</span><span class="value" style="font-size:18px">${pctLogImpoAcumulado===null?'—':pctLogImpoAcumulado.toFixed(1)+'%'}</span><span class="sub">Costo Total Logístico Impo ÷ Valor FOB (promedio ponderado)</span></div>
+      <div class="kpi"><span class="label">Costo total importación (incluye IVA)</span><span class="value mono" style="font-size:18px">${moneyCOP(totalCostoImportacionConIVA)}</span><span class="sub">Valor CIF + Costos nacionaliz.+logística</span></div>
+      <div class="kpi"><span class="label">Costo total importación Neto (excluye IVA)</span><span class="value mono" style="font-size:18px">${moneyCOP(totalCostoImportacionNetoSinIVA)}</span><span class="sub">Total anterior menos el IVA de nacionalización</span></div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head">
+        <div><h2>Alertas de llegada próximas (≤10 días)</h2><div class="desc">Calculado igual que la hoja "Control importaciones": días para llegada = ETA − hoy.</div></div>
+      </div>
+      <div class="panel-body flush">
+        ${alertas.length ? `<div class="table-scroll"><table class="grid">
+          <thead><tr><th>CI / Embarque</th><th>BL</th><th>Punto</th><th>ETA</th><th>Alerta</th><th>Estado</th></tr></thead>
+          <tbody>
+            ${alertas.map(({e,a})=>`
+              <tr class="row-${ESTADO_COLOR[e.estado_impo]||'neutral'}">
+                <td class="mono">${esc(e.ci||'')}</td>
+                <td class="mono">${esc(e.bl||'')}</td>
+                <td>${esc(e.tienda||'')}</td>
+                <td>${fmtDate(e.fecha_arribo)}</td>
+                <td><span class="badge ${a.cls}">${a.label}</span></td>
+                <td><span class="badge ${ESTADO_COLOR[e.estado_impo]||'neutral'}">${esc(e.estado_impo||'—')}</span></td>
+              </tr>`).join('')}
+          </tbody>
+        </table></div>` : `<div class="empty">No hay embarques con llegada dentro de los próximos 10 días.</div>`}
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head"><div><h2>Distribución por estado</h2></div></div>
+      <div class="panel-body">
+        <div class="waterfall">
+          ${['Espera de reserva','Reserva confirmada','Emisión pendiente','En tránsito','En puerto','Nacionalización','Entregado','Cerrado'].map(st=>{
+            const n = embF.filter(e=>e.estado_impo===st).length;
+            const pct = embF.length ? Math.round(n/embF.length*100) : 0;
+            const cls = ESTADO_COLOR[st];
+            return `<div class="wf-row">
+              <span class="wf-label">${st}</span>
+              <div class="wf-track"><div class="wf-fill" style="width:${pct}%; background:var(--${cls==='neutral'?'neutral-stage':cls})"></div></div>
+              <span class="wf-value">${n} (${pct}%)</span>
+            </div>`;
+          }).join('')}
+        </div>
+      </div>
+    </div>
+  `;
+  }
+
+  dateFieldSel.addEventListener('change', e=>{ resumenDateField = e.target.value; paint(); });
+  desdeInput.addEventListener('change', e=>{ resumenDesde = e.target.value; paint(); });
+  hastaInput.addEventListener('change', e=>{ resumenHasta = e.target.value; paint(); });
+  document.getElementById('resumenClearFilter').addEventListener('click', ()=>{
+    resumenDesde = ''; resumenHasta = '';
+    desdeInput.value = ''; hastaInput.value = '';
+    paint();
+  });
+
+  paint();
+};
+</script>
+
+<script>
+/* ============================================================
+   VISTA: SEGUIMIENTO DE EMBARQUES
+   ============================================================ */
+const EMB_FIELDS = [
+  {k:'cuenta', label:'N° Importación', type:'seq', w:110},
+  {k:'ci', label:'CI', type:'text', w:110, mono:true},
+  {k:'bl', label:'N° BL / HBL', type:'text', w:150, mono:true},
+  {k:'tienda', label:'Punto/Sucursal', type:'text', w:110},
+  {k:'producto', label:'Producto', type:'text', w:140},
+  {k:'origen', label:'Puerto carga', type:'text', w:110},
+  {k:'destino', label:'Puerto descargue', type:'text', w:120},
+  {k:'naviera', label:'Naviera', type:'text', w:130},
+  {k:'fwd', label:'Agente / FWD', type:'text', w:110},
+  {k:'tte_terrestre', label:'Tte terrestre', type:'text', w:110},
+  {k:'tipo_contenedor', label:'Tipo cont.', type:'text', w:90},
+  {k:'cantidad_contenedores', label:'Cantidad de Contenedores', type:'number', w:140},
+  {k:'cont_no', label:'N° contenedor', type:'text', w:130, mono:true},
+  {k:'fecha_zarpe', label:'ETD salida', type:'date', w:130},
+  {k:'fecha_arribo', label:'ETA llegada', type:'date', w:130},
+  {k:'dias_para_llegada', label:'Días para Llegada', type:'computed_days', w:120},
+  {k:'dias_libres_bodega', label:'Días Libres en Bodega', type:'number', w:140},
+  {k:'fecha_bodega_est', label:'Fecha bodega est.', type:'computed_date', w:140},
+  {k:'fecha_bodega_real', label:'Fecha bodega real', type:'date', w:140},
+  {k:'tiempo_adicional_bodega', label:'Tiempo Adicional en Bodega', type:'computed_days', w:160},
+  {k:'incoterm', label:'Incoterm', type:'select', opts:INCOTERM_OPTS, w:90},
+  {k:'estado_impo', label:'Estado', type:'select', opts:ESTADO_IMPO_OPTS, w:170},
+  {k:'n_factura', label:'N° Factura', type:'text', w:110},
+  {k:'di', label:'DI', type:'text', w:130, mono:true},
+  {k:'puerto_zona_franca', label:'Puerto/Zona Franca', type:'text', w:120},
+  {k:'observaciones', label:'Observaciones', type:'text', w:180},
+];
+
+/* Numera cada importación en orden ascendente por fecha de zarpe (ETD); estable e
+   independiente del filtro/orden actual de la tabla. No se guarda en BD: es solo
+   de presentación (la columna "cuenta" original se conserva intacta, y sigue
+   visible sin cambios en la columna "CI", con la que siempre ha sido idéntica). */
+function computeImportSequence(){
+  const sorted = [...STATE.embarques].sort((a,b)=>{
+    const da = a.fecha_zarpe, db = b.fecha_zarpe;
+    if(da && db) return da < db ? -1 : (da > db ? 1 : 0);
+    if(da && !db) return -1;
+    if(!da && db) return 1;
+    return String(a.created_at||a.id).localeCompare(String(b.created_at||b.id));
+  });
+  const map = {};
+  sorted.forEach((r,i)=>{ map[r.id] = i+1; });
+  return map;
+}
+
+let embFilter = {estado:'', tienda:'', q:''};
+
+function embRowsFiltered(){
+  return STATE.embarques.filter(r=>{
+    if(embFilter.estado && r.estado_impo !== embFilter.estado) return false;
+    if(embFilter.tienda && !(r.tienda||'').toUpperCase().includes(embFilter.tienda.toUpperCase())) return false;
+    if(embFilter.q){
+      const hay = (r.bl+' '+r.ci+' '+r.producto+' '+r.cont_no+' '+r.naviera).toUpperCase();
+      if(!hay.includes(embFilter.q.toUpperCase())) return false;
+    }
+    return true;
+  });
+}
+
+function cellInput(f, row, seqMap){
+  if(f.type==='seq'){
+    const n = seqMap ? seqMap[row.id] : null;
+    return `<span class="mono" style="color:var(--text-muted)" title="Consecutivo ascendente por fecha ETD">${n!=null?n:'—'}</span>`;
+  }
+  if(f.type==='computed_days'){
+    const v = row[f.k];
+    return `<span class="mono" style="color:var(--text-muted)" title="Calculado automáticamente">${v==null?'—':v+' d'}</span>`;
+  }
+  if(f.type==='computed_date'){
+    const v = row[f.k];
+    return `<span class="mono" style="color:var(--text-muted)" title="Calculado: ETA llegada + Días Libres en Bodega">${v?fmtDate(v):'—'}</span>`;
+  }
+  const val = row[f.k] ?? '';
+  if(f.type==='select'){
+    return `<select class="cell" data-field="${f.k}">
+      <option value="">—</option>
+      ${f.opts.map(o=>`<option value="${esc(o)}" ${o===val?'selected':''}>${esc(o)}</option>`).join('')}
+    </select>`;
+  }
+  const type = f.type==='date' ? 'date' : (f.type==='number' ? 'number' : 'text');
+  return `<input class="cell${f.mono?' mono':''}" type="${type}" data-field="${f.k}" value="${esc(val)}">`;
+}
+
+function renderEmbarquesTable(){
+  const rows = embRowsFiltered();
+  const seqMap = computeImportSequence();
+  const thead = `<tr>${EMB_FIELDS.map(f=>`<th style="min-width:${f.w}px">${f.label}</th>`).join('')}<th style="min-width:90px">Alerta</th><th style="min-width:50px"></th></tr>`;
+  const tbody = rows.map(row=>{
+    const cls = ESTADO_COLOR[row.estado_impo] || '';
+    const a = alertaLlegada(row.fecha_arribo);
+    return `<tr data-id="${row.id}" class="${cls?'row-'+cls:''}">
+      ${EMB_FIELDS.map(f=>`<td>${cellInput(f,row,seqMap)}</td>`).join('')}
+      <td><span class="badge ${a.cls}">${a.label}</span></td>
+      <td><button class="btn small danger" data-action="del-emb" data-id="${row.id}" title="Eliminar">✕</button></td>
+    </tr>`;
+  }).join('');
+  return `<div class="table-scroll"><table class="grid"><thead>${thead}</thead><tbody>${tbody || `<tr><td colspan="${EMB_FIELDS.length+2}"><div class="empty">Sin embarques que coincidan con el filtro.</div></td></tr>`}</tbody></table></div>`;
+}
+
+VIEWS.embarques = function(){
+  const el = document.getElementById('view-embarques');
+  el.innerHTML = `
+    <div class="panel">
+      <div class="panel-head">
+        <div><h2>Seguimiento de Embarques</h2><div class="desc">Adaptado de "Seguimiento_Embarque" y "Control importaciones" · colores por estado: <span class="badge success">verde = finalizado</span> <span class="badge warning">amarillo = en puerto</span> <span class="badge info">azul = en tránsito</span> <span class="badge neutral">gris = pre-embarque</span></div></div>
+        <div class="toolbar">
+          <button class="btn primary" id="embAddRow">+ Nuevo embarque</button>
+          <button class="btn" id="embImportBtn">Importar Excel</button>
+          <input type="file" id="embImportFile" accept=".xlsx,.xls" style="display:none">
+          <button class="btn" id="embExportBtn">Exportar Excel</button>
+        </div>
+      </div>
+      <div class="panel-body">
+        <div class="filters">
+          <select class="field" id="embFEstado"><option value="">Todos los estados</option>${ESTADO_IMPO_OPTS.map(o=>`<option value="${esc(o)}">${esc(o)}</option>`).join('')}</select>
+          <input class="field" id="embFTienda" placeholder="Filtrar por punto/sucursal…">
+          <input class="field" id="embFQ" placeholder="Buscar BL, contenedor, producto, naviera…" style="min-width:240px">
+          <span style="font-size:12px;color:var(--text-muted)" id="embCount"></span>
+        </div>
+      </div>
+      <div class="panel-body flush" id="embTableWrap"></div>
+    </div>
+  `;
+
+  const wrap = document.getElementById('embTableWrap');
+  function paint(){
+    wrap.innerHTML = renderEmbarquesTable();
+    document.getElementById('embCount').textContent = embRowsFiltered().length + ' de ' + STATE.embarques.length + ' embarques';
+  }
+  paint();
+
+  document.getElementById('embFEstado').addEventListener('change', e=>{embFilter.estado=e.target.value; paint();});
+  document.getElementById('embFTienda').addEventListener('input', debounce(e=>{embFilter.tienda=e.target.value; paint();},200));
+  document.getElementById('embFQ').addEventListener('input', debounce(e=>{embFilter.q=e.target.value; paint();},200));
+
+  document.getElementById('embAddRow').addEventListener('click', async ()=>{
+    const row = await DB.insert('impo_embarques', {estado_impo:'Espera de reserva'});
+    if(row){ STATE.embarques.unshift(row); paint(); toast('Embarque creado','ok'); }
+  });
+
+  wrap.addEventListener('change', async (e)=>{
+    const t = e.target;
+    if(!t.dataset.field) return;
+    const tr = t.closest('tr');
+    const id = tr.dataset.id;
+    const field = t.dataset.field;
+    const fdef = EMB_FIELDS.find(f=>f.k===field);
+    let value = t.value === '' ? null : t.value;
+    if(fdef && fdef.type==='number' && value!==null) value = Number(value);
+    const patch = {[field]: value};
+    const updated = await DB.update('impo_embarques', id, patch);
+    if(updated){
+      const idx = STATE.embarques.findIndex(r=>r.id===id);
+      if(idx>-1) STATE.embarques[idx] = updated;
+      // Estos campos afectan al color/alerta de la fila, al consecutivo "N° Importación"
+      // y/o a las columnas calculadas (Días para Llegada, Fecha bodega est., Tiempo
+      // adicional en bodega), así que se repinta toda la tabla para reflejarlas.
+      const needsFullRepaint = ['estado_impo','fecha_arribo','fecha_zarpe','dias_libres_bodega','fecha_bodega_real'].includes(field);
+      if(needsFullRepaint) paint();
+    }
+  });
+
+  wrap.addEventListener('click', async (e)=>{
+    const btn = e.target.closest('[data-action="del-emb"]');
+    if(!btn) return;
+    if(!confirm('¿Eliminar este embarque? Esta acción no se puede deshacer.')) return;
+    const ok = await DB.remove('impo_embarques', btn.dataset.id);
+    if(ok){
+      STATE.embarques = STATE.embarques.filter(r=>r.id!==btn.dataset.id);
+      paint();
+      toast('Embarque eliminado','ok');
+    }
+  });
+
+  document.getElementById('embExportBtn').addEventListener('click', exportEmbarquesExcel);
+  document.getElementById('embImportBtn').addEventListener('click', ()=>document.getElementById('embImportFile').click());
+  document.getElementById('embImportFile').addEventListener('change', importEmbarquesExcel);
+};
+
+function exportEmbarquesExcel(){
+  const seqMap = computeImportSequence();
+  const rows = STATE.embarques.map(r=>{
+    const a = alertaLlegada(r.fecha_arribo);
+    return {
+      'N° IMPORTACIÓN': seqMap[r.id] ?? '', 'CI': r.ci, 'N° HBL': r.bl, 'SUCURSAL': r.tienda, 'PRODUCTO': r.producto,
+      'ESTADO': r.estado_impo, 'INCOTERM': r.incoterm,
+      'PROVEEDOR/EMBARCADOR': r.proveedor_embarcador, 'PUERTO DE CARGA': r.origen, 'PUERTO DE DESCARGUE': r.destino,
+      'NAVIERA': r.naviera, 'AGENTE/FWD': r.fwd, 'TTE TERRESTRE': r.tte_terrestre,
+      'TIPO CONTENEDOR': r.tipo_contenedor, 'CANTIDAD DE CONTENEDORES': r.cantidad_contenedores, 'N° CONTENEDOR': r.cont_no,
+      "ETD - SALIDA": r.fecha_zarpe, "ETA - LLEGADA": r.fecha_arribo,
+      'DÍAS PARA LLEGADA (TRÁNSITO ETD-ETA)': r.dias_para_llegada,
+      'DÍAS LIBRES EN BODEGA': r.dias_libres_bodega,
+      'FECHA BODEGA EST (CALCULADA)': r.fecha_bodega_est, 'FECHA BODEGA REAL': r.fecha_bodega_real,
+      'TIEMPO ADICIONAL EN BODEGA': r.tiempo_adicional_bodega,
+      'ALERTA - DÍAS RESTANTES PARA ETA': a.dias, 'ALERTA DE LLEGADA': a.label,
+      'N° FACTURA': r.n_factura, 'DI': r.di, 'PUERTO/ZONA FRANCA': r.puerto_zona_franca,
+      'OBSERVACIONES': r.observaciones,
+    };
+  });
+  const ws = XLSX.utils.json_to_sheet(rows);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Seguimiento embarques');
+  XLSX.writeFile(wb, `Seguimiento_Embarques_${todayISO()}.xlsx`);
+  toast('Excel exportado','ok');
+}
+
+async function importEmbarquesExcel(e){
+  const file = e.target.files[0];
+  if(!file) return;
+  const buf = await file.arrayBuffer();
+  const wb = XLSX.read(buf, {type:'array', cellDates:true});
+  const sheetName = wb.SheetNames.find(n=>/seguimiento/i.test(n)) || wb.SheetNames[0];
+  const ws = wb.Sheets[sheetName];
+  const json = XLSX.utils.sheet_to_json(ws, {defval:null});
+  if(!json.length){ toast('No se encontraron filas en la hoja seleccionada','err'); return; }
+
+  const norm = (o) => {
+    const g = (...keys) => { for(const k of keys){ for(const kk of Object.keys(o)){ if(kk.toLowerCase().replace(/\s+/g,'').includes(k)) return o[kk]; } } return null; };
+    const toISO = (v) => {
+      if(!v) return null;
+      if(v instanceof Date) return v.toISOString().slice(0,10);
+      const d = new Date(v); return isNaN(d) ? null : d.toISOString().slice(0,10);
+    };
+    const toNum = (v) => { if(v===null || v===undefined || v==='') return null; const n = Number(v); return isNaN(n) ? null : n; };
+    return {
+      ci: g('ci','cuenta'),
+      cuenta: g('cuenta','ci'),
+      tienda: g('tienda','sucursal','punto'),
+      producto: g('producto'),
+      origen: g('origen','puertocarga','puertodeorigen'),
+      destino: g('destino','puertodescargue','puertodedestino'),
+      bl: g('bl','hbl','nhbl'),
+      tipo_contenedor: g('tipocontenedor','tipocont'),
+      cantidad_contenedores: toNum(g('cantidaddecontenedores','cantidadcontenedores','numerodecontenedores')),
+      cont_no: g('contno','contenedor','ncontenedor'),
+      fwd: g('fwd','agente'),
+      naviera: g('naviera'),
+      tte_terrestre: g('ttette','tteterrestre','transporteterrestre'),
+      fecha_zarpe: toISO(g('fechadezarpe','etdsalida','etd')),
+      fecha_arribo: toISO(g('fechadearribo','etallegada','eta')),
+      dias_libres_bodega: toNum(g('diaslibresenbodega','diaslibresbodega')),
+      fecha_bodega_real: toISO(g('fechaenbodegareal','fechabodegareal')),
+      di: g('di'),
+      puerto_zona_franca: g('puertozonafranca','puertpuertozonafrancao'),
+      estado_impo: (()=>{ const s=(g('status','estado')||'').toString().toUpperCase();
+        if(s.includes('FINAL')) return 'Entregado';
+        if(s.includes('PUERTO')) return 'En puerto';
+        if(s.includes('TRANSITO')||s.includes('TRÁNSITO')) return 'En tránsito';
+        if(ESTADO_IMPO_OPTS.includes(g('status','estado'))) return g('status','estado');
+        return null;
+      })(),
+    };
+  };
+
+  let created=0, matched=0;
+  for(const raw of json){
+    const rec = norm(raw);
+    if(!rec.bl && !rec.ci) continue;
+    const existing = STATE.embarques.find(e => (rec.bl && e.bl===rec.bl) || (rec.ci && e.ci===rec.ci));
+    if(existing){
+      const updated = await DB.update('impo_embarques', existing.id, rec);
+      if(updated){ Object.assign(existing, updated); matched++; }
+    } else {
+      const row = await DB.insert('impo_embarques', rec);
+      if(row){ STATE.embarques.push(row); created++; }
+    }
+  }
+  toast(`Importación completa: ${created} creados, ${matched} actualizados`, 'ok');
+  VIEWS.embarques();
+  e.target.value = '';
+}
+</script>
+
+<script>
+/* ============================================================
+   VISTA: CONTROL FINANCIERO (BD IMPORTACIONES)
+   ============================================================ */
+let bdFilter = {bl:'', estadoPago:'', estadoImpo:''};
+
+function bdRowsFiltered(){
+  return STATE.bdImportaciones.filter(r=>{
+    if(bdFilter.bl && !(r.bl||'').toUpperCase().includes(bdFilter.bl.toUpperCase())) return false;
+    if(bdFilter.estadoPago && r.estado_pago !== bdFilter.estadoPago) return false;
+    if(bdFilter.estadoImpo && r.estado_impo !== bdFilter.estadoImpo) return false;
+    return true;
+  });
+}
+
+function proveedorDatalist(){
+  return `<datalist id="dlProveedores">${STATE.proveedores.map(p=>`<option value="${esc(p.proveedor)}">`).join('')}</datalist>`;
+}
+
+const BD_FIELDS_LEFT = [
+  {k:'fecha', label:'Fecha', type:'date', w:120},
+  {k:'bl', label:'BL / Embarque', type:'bl', w:150},
+  {k:'n_factura', label:'N° Factura', type:'text', w:120},
+  {k:'proveedor', label:'Proveedor', type:'proveedor', w:220},
+  {k:'nit', label:'NIT', type:'text', w:120, mono:true},
+  {k:'concepto', label:'Concepto', type:'text', w:170},
+];
+const BD_FIELDS_MONEY = [
+  {k:'subtotal', label:'Subtotal'},
+  {k:'descuento', label:'Descuento'},
+  {k:'iva', label:'IVA'},
+];
+// Nota: Arancel, Sanciones, Costo Logística-Cta Impo y Gtos COFA ya NO se capturan aquí (a
+// pedido de Juan Camilo, por ser información redundante con el cruce automático hacia
+// Liquidación Incoterm) — para que un rubro de servicio sume a uno de esos conceptos, se
+// etiqueta con "Rubro Costo_Mercancia" (ver bdCruceInputs más abajo) en vez de escribir un
+// monto aparte en una columna que no se conecta con Liquidación Incoterm. Las columnas
+// arancel/sanciones/costo_logistica/gtos_cofa/total_a_pagar/gran_total siguen existiendo en
+// la base de datos (no se borraron, por si hay datos históricos), simplemente ya no se
+// muestran ni se editan desde este grid.
+const BD_FIELDS_MONEY_RETEN = [
+  {k:'rte_fte', label:'ReteFuente'},
+  {k:'reteiva', label:'ReteIVA'},
+];
+const BD_FIELDS_RIGHT = [
+  {k:'estado_pago', label:'Estado de Pago', type:'select', opts:ESTADO_PAGO_OPTS, w:130},
+  {k:'estado_impo', label:'Estado Impo', type:'select', opts:ESTADO_IMPO_OPTS, w:170},
+];
+
+// "Tipo de factura" y "Rubro Costo_Mercancia" son las dos columnas que alimentan el cruce
+// automático hacia Liquidación Incoterm (ver computeAutoRubros/recomputeLiquidacionFromControlFinanciero
+// más abajo). Se renderizan aparte de cellInput() porque sus opciones son pares {value,label},
+// no strings simples como el resto de los selects de este grid.
+// Nota: las facturas de tipo "Mercancía" (FOB/Flete/Seguro/TRM) solo se cargan completas desde
+// "Importar Facturas" — este grid de Control Financiero está pensado para rubros de servicio y
+// no tiene columnas de FOB/Flete/Seguro en USD.
+function bdCruceInputs(row){
+  const tipo = row.tipo_factura || 'servicio';
+  const tipoSel = `<select class="cell" data-field="tipo_factura">${TIPO_FACTURA_OPTS.map(o=>`<option value="${o.value}" ${tipo===o.value?'selected':''}>${esc(o.label)}</option>`).join('')}</select>`;
+  const rubroSel = `<select class="cell" data-field="rubro_costo_mercancia" ${tipo==='mercancia'?'disabled title="No aplica: esta factura es de mercancía, no de servicio"':''}>
+    <option value="">— sin asignar —</option>
+    ${RUBRO_COSTO_MERCANCIA_OPTS.map(o=>`<option value="${o.value}" ${o.value===row.rubro_costo_mercancia?'selected':''}>${esc(o.label)}</option>`).join('')}
+  </select>`;
+  return {tipoSel, rubroSel};
+}
+
+function bdCellInput(f, row){
+  const val = row[f.k] ?? '';
+  if(f.type==='select') return cellInput(f,row);
+  if(f.type==='bl'){
+    return `<input class="cell mono" list="dlBLs" data-field="bl" value="${esc(val)}" placeholder="N° BL">`;
+  }
+  if(f.type==='proveedor'){
+    return `<input class="cell" list="dlProveedores" data-field="proveedor" value="${esc(val)}" placeholder="Proveedor…">`;
+  }
+  return `<input class="cell${f.mono?' mono':''}" type="text" data-field="${f.k}" value="${esc(val)}">`;
+}
+function moneyCellInput(k, row){
+  return `<input class="cell mono" type="number" step="0.01" data-field="${k}" value="${row[k] ?? 0}" style="text-align:right">`;
+}
+
+function renderBdTable(){
+  const rows = bdRowsFiltered();
+  const thead = `<tr>
+    ${BD_FIELDS_LEFT.map(f=>`<th style="min-width:${f.w}px">${f.label}</th>`).join('')}
+    ${BD_FIELDS_MONEY.map(f=>`<th style="min-width:110px">${f.label}</th>`).join('')}
+    <th style="min-width:130px">Total Operación</th>
+    ${BD_FIELDS_MONEY_RETEN.map(f=>`<th style="min-width:110px">${f.label}</th>`).join('')}
+    <th style="min-width:150px">Total menos Retenciones</th>
+    ${BD_FIELDS_RIGHT.map(f=>`<th style="min-width:${f.w}px">${f.label}</th>`).join('')}
+    <th style="min-width:200px">Tipo de factura</th>
+    <th style="min-width:220px">Rubro Costo_Mercancia</th>
+    <th style="min-width:50px"></th>
+  </tr>`;
+  const tbody = rows.map(row=>{
+    const cruce = bdCruceInputs(row);
+    return `
+    <tr data-id="${row.id}">
+      ${BD_FIELDS_LEFT.map(f=>`<td>${bdCellInput(f,row)}</td>`).join('')}
+      ${BD_FIELDS_MONEY.map(f=>`<td>${moneyCellInput(f.k,row)}</td>`).join('')}
+      <td class="mono" style="text-align:right;font-weight:600">${moneyCOP(row.total_operacion)}</td>
+      ${BD_FIELDS_MONEY_RETEN.map(f=>`<td>${moneyCellInput(f.k,row)}</td>`).join('')}
+      <td class="mono" style="text-align:right;font-weight:700;color:var(--accent)">${moneyCOP(row.total_menos_retenciones)}</td>
+      ${BD_FIELDS_RIGHT.map(f=>`<td>${cellInput(f,row)}</td>`).join('')}
+      <td>${cruce.tipoSel}</td>
+      <td>${cruce.rubroSel}</td>
+      <td><button class="btn small danger" data-action="del-bd" data-id="${row.id}">✕</button></td>
+    </tr>`;}).join('');
+  return `<div class="table-scroll"><table class="grid"><thead>${thead}</thead><tbody>${tbody || `<tr><td colspan="18"><div class="empty">Sin rubros registrados. Usa "+ Nuevo rubro" o importa facturas PDF.</div></td></tr>`}</tbody></table></div>`;
+}
+
+VIEWS.financiero = function(){
+  const el = document.getElementById('view-financiero');
+  el.innerHTML = `
+    <div class="panel">
+      <div class="panel-head">
+        <div><h2>Control Financiero — BD Importaciones</h2><div class="desc">Cada fila es una factura/rubro de un proveedor (naviera, agente, aduanas, transporte…). El concepto, el tipo de factura y el rubro Costo_Mercancia se autocompletan al escribir el proveedor. Para que una factura de servicio se sume automáticamente a Liquidación Incoterm, etiquétala con un "Rubro Costo_Mercancia" — ese es el único dato que alimenta esa liquidación desde aquí, junto con Tipo de factura y el desglose de Subtotal/Descuento/IVA/Retenciones.</div></div>
+        <div class="toolbar">
+          <button class="btn primary" id="bdAddRow">+ Nuevo rubro</button>
+          <button class="btn" id="bdExportBtn">Exportar Excel</button>
+        </div>
+      </div>
+      <div class="panel-body">
+        <div class="filters">
+          <input class="field" id="bdFBl" placeholder="Filtrar por BL…">
+          <select class="field" id="bdFPago"><option value="">Estado de pago (todos)</option>${ESTADO_PAGO_OPTS.map(o=>`<option>${o}</option>`).join('')}</select>
+          <select class="field" id="bdFImpo"><option value="">Estado impo (todos)</option>${ESTADO_IMPO_OPTS.map(o=>`<option>${o}</option>`).join('')}</select>
+          <span style="font-size:12px;color:var(--text-muted)" id="bdCount"></span>
+        </div>
+      </div>
+      <div class="panel-body flush" id="bdTableWrap"></div>
+    </div>
+    ${proveedorDatalist()}
+    <datalist id="dlBLs">${STATE.embarques.map(e=>`<option value="${esc(e.bl)}">`).join('')}</datalist>
+  `;
+
+  const wrap = document.getElementById('bdTableWrap');
+  function paint(){
+    wrap.innerHTML = renderBdTable();
+    document.getElementById('bdCount').textContent = bdRowsFiltered().length + ' de ' + STATE.bdImportaciones.length + ' rubros';
+  }
+  paint();
+
+  document.getElementById('bdFBl').addEventListener('input', debounce(e=>{bdFilter.bl=e.target.value;paint();},200));
+  document.getElementById('bdFPago').addEventListener('change', e=>{bdFilter.estadoPago=e.target.value;paint();});
+  document.getElementById('bdFImpo').addEventListener('change', e=>{bdFilter.estadoImpo=e.target.value;paint();});
+
+  document.getElementById('bdAddRow').addEventListener('click', async ()=>{
+    const row = await DB.insert('impo_bd_importaciones', {estado_pago:'Pendiente', fecha: todayISO()});
+    if(row){ STATE.bdImportaciones.unshift(row); paint(); toast('Rubro creado','ok'); }
+  });
+
+  wrap.addEventListener('change', async (e)=>{
+    const t = e.target;
+    if(!t.dataset.field) return;
+    const tr = t.closest('tr');
+    const id = tr.dataset.id;
+    const field = t.dataset.field;
+    let value = t.value === '' ? null : t.value;
+    if(['subtotal','descuento','arancel','iva','sanciones','rte_fte','reteiva','costo_logistica','gtos_cofa'].includes(field)){
+      value = value===null ? 0 : Number(value);
+    }
+    let patch = {[field]: value};
+
+    // autocompletar proveedor -> nit / concepto / etapa incoterm / tipo de factura / rubro
+    if(field==='proveedor' && value){
+      const match = STATE.proveedores.find(p=>p.proveedor.toUpperCase()===value.toUpperCase());
+      if(match){
+        patch.nit = match.nit;
+        patch.concepto = match.concepto;
+        patch.etapa_incoterm = match.etapa_incoterm;
+        patch.tipo_factura = match.tipo_factura_default || 'servicio';
+        patch.rubro_costo_mercancia = match.tipo_factura_default==='mercancia' ? null : (match.rubro_costo_mercancia || null);
+      }
+    }
+    // si se marca como "Mercancía", ya no aplica ningún rubro de Costo_Mercancia
+    if(field==='tipo_factura' && value==='mercancia') patch.rubro_costo_mercancia = null;
+    // autocompletar producto/punto/estado_impo desde el embarque vinculado por BL
+    if(field==='bl' && value){
+      const emb = STATE.embarques.find(x=>x.bl===value);
+      if(emb){
+        patch.embarque_id = emb.id;
+        if(!tr.querySelector('[data-field="producto"]').value) patch.producto = emb.producto;
+        if(!tr.querySelector('[data-field="estado_impo"]').value) patch.estado_impo = emb.estado_impo;
+      }
+    }
+
+    // BL anterior de esta fila (por si el campo que cambió fue justamente el BL, hay que
+    // recalcular la liquidación tanto del BL viejo como del nuevo).
+    const rowAntes = STATE.bdImportaciones.find(r=>r.id===id);
+    const blAntes = rowAntes ? rowAntes.bl : null;
+
+    const updated = await DB.update('impo_bd_importaciones', id, patch);
+    if(updated){
+      const idx = STATE.bdImportaciones.findIndex(r=>r.id===id);
+      if(idx>-1) STATE.bdImportaciones[idx] = updated;
+      paint();
+      if(blAntes && blAntes!==updated.bl) await recomputeLiquidacionFromControlFinanciero(blAntes);
+      await recomputeLiquidacionFromControlFinanciero(updated.bl);
+    }
+  });
+
+  wrap.addEventListener('click', async (e)=>{
+    const btn = e.target.closest('[data-action="del-bd"]');
+    if(!btn) return;
+    if(!confirm('¿Eliminar este rubro?')) return;
+    const rowBorrada = STATE.bdImportaciones.find(r=>r.id===btn.dataset.id);
+    const ok = await DB.remove('impo_bd_importaciones', btn.dataset.id);
+    if(ok){
+      STATE.bdImportaciones = STATE.bdImportaciones.filter(r=>r.id!==btn.dataset.id);
+      paint();
+      toast('Rubro eliminado','ok');
+      if(rowBorrada && rowBorrada.bl) await recomputeLiquidacionFromControlFinanciero(rowBorrada.bl);
+    }
+  });
+
+  document.getElementById('bdExportBtn').addEventListener('click', ()=>{
+    const rows = STATE.bdImportaciones.map(r=>({
+      'FECHA': r.fecha, 'BL': r.bl, 'PRODUCTO': r.producto, 'PUNTO': r.punto, 'NIT': r.nit, 'PROVEEDOR': r.proveedor,
+      'N. FACTURA': r.n_factura, 'SUBTOTAL': r.subtotal, 'DESCUENTO': r.descuento, 'IVA': r.iva,
+      'TOTAL OPERACION': r.total_operacion, 'RETEFUENTE': r.rte_fte, 'RETEIVA': r.reteiva,
+      'TOTAL MENOS RETENCIONES': r.total_menos_retenciones, 'CONCEPTO': r.concepto,
+      'ESTADO DE PAGO': r.estado_pago, 'ESTADO IMPO': r.estado_impo,
+      'TIPO DE FACTURA': r.tipo_factura==='mercancia'?'Mercancía':'Servicio / costo de importación',
+      'RUBRO COSTO_MERCANCIA': r.rubro_costo_mercancia ? (RUBRO_COSTO_MERCANCIA_LABEL[r.rubro_costo_mercancia]||r.rubro_costo_mercancia) : '',
+      'MONEDA': r.moneda||'', 'FOB USD (MERCANCÍA)': r.fob_usd||'', 'FLETE USD (MERCANCÍA)': r.flete_usd||'', 'SEGURO USD (MERCANCÍA)': r.seguro_usd||'', 'TRM FACTURA (MERCANCÍA)': r.trm_factura||'',
+    }));
+    const ws = XLSX.utils.json_to_sheet(rows);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'BD IMPORTACIONES');
+    XLSX.writeFile(wb, `BD_Importaciones_${todayISO()}.xlsx`);
+    toast('Excel exportado','ok');
+  });
+};
+</script>
+
+<script>
+/* ============================================================
+   VISTA: LIQUIDACIÓN INCOTERM
+   Combina impo_datos_mercancia (FOB→CIF) + impo_costo_mercancia
+   (nacionalización, logística, entrega) para dar el costo total
+   de importación puesto en bodega, clasificado por etapa Incoterm.
+   ============================================================ */
+let incotermSelectedBL = null;
+let lqCurrency = 'COP'; // moneda de visualización de la Liquidación Incoterm: COP o USD (según TRM del BL)
+
+function allLiquidacionBLs(){
+  const set = new Set();
+  STATE.datosMercancia.forEach(r=>r.bl && set.add(r.bl));
+  STATE.costoMercancia.forEach(r=>r.bl && set.add(r.bl));
+  return Array.from(set);
+}
+
+// Motor del cruce automático Control Financiero -> Liquidación Incoterm (a pedido de Juan
+// Camilo). Agrupa las facturas/rubros de BD Importaciones de un BL en dos totales: lo que
+// corresponde a Datos_Mercancia (facturas de mercancía) y, por rubro, lo que corresponde a
+// Costo_Mercancia (facturas de servicio con un rubro asignado). Una factura de servicio sin
+// rubro asignado se ignora aquí — sigue viéndose en Control Financiero, pero no se suma a
+// ningún lado de la Liquidación Incoterm hasta que se le asigne un rubro.
+// Para las facturas de servicio se suma "total_menos_retenciones" (el neto de esa factura
+// después de descuento/IVA/retenciones) — deliberadamente NO las columnas heredadas de
+// Arancel/Sanciones/Costo logística/Gtos COFA que ya existen por fila en BD Importaciones,
+// que siguen siendo un cálculo aparte para el panel "Liquidación por BL" de Control
+// Financiero. Mezclar ambas sumaría el mismo costo dos veces.
+function computeAutoRubros(bl){
+  const rows = STATE.bdImportaciones.filter(r=>r.bl===bl);
+  const mercancia = {fob:0, freight:0, insurance:0, count:0, facturas:[]};
+  const servicio = {}; // rubro -> {sum, count, facturas:[]}
+  rows.forEach(r=>{
+    if(r.tipo_factura==='mercancia'){
+      mercancia.fob += Number(r.fob_usd||0);
+      mercancia.freight += Number(r.flete_usd||0);
+      mercancia.insurance += Number(r.seguro_usd||0);
+      mercancia.count++;
+      mercancia.facturas.push(r);
+    } else if(r.tipo_factura==='servicio' && r.rubro_costo_mercancia){
+      const key = r.rubro_costo_mercancia;
+      if(!servicio[key]) servicio[key] = {sum:0, count:0, facturas:[]};
+      const monto = Number(r.total_menos_retenciones ?? r.subtotal ?? 0);
+      servicio[key].sum += monto;
+      servicio[key].count++;
+      servicio[key].facturas.push(r);
+    }
+  });
+  return {mercancia, servicio};
+}
+
+// Recalcula y guarda (upsert) en impo_datos_mercancia / impo_costo_mercancia los campos que
+// tienen al menos una factura tageada en Control Financiero para este BL. Es un recálculo
+// completo (no un incremento), así que es seguro llamarlo después de crear, editar o
+// eliminar cualquier factura/rubro — siempre deja el campo en la suma vigente de las
+// facturas tageadas en ese momento. Un campo sin ninguna factura tageada para este BL NO se
+// toca (para no pisar un valor cargado a mano antes de tener facturas, p. ej. una
+// estimación mientras llega la factura real).
+async function recomputeLiquidacionFromControlFinanciero(bl){
+  if(!bl) return;
+  const auto = computeAutoRubros(bl);
+  const emb = STATE.embarques.find(e=>e.bl===bl);
+
+  if(auto.mercancia.count > 0){
+    let dm = STATE.datosMercancia.find(r=>r.bl===bl);
+    const patch = {fob: auto.mercancia.fob, freight: auto.mercancia.freight, insurance: auto.mercancia.insurance};
+    // Si el BL todavía no tiene TRM propia cargada, se toma la de la última factura de
+    // mercancía que sí traiga una — sin pisar una TRM que Juan Camilo ya haya cargado a mano.
+    if(!dm || !Number(dm.trm)){
+      const conTrm = auto.mercancia.facturas.filter(f=>Number(f.trm_factura)>0);
+      if(conTrm.length) patch.trm = Number(conTrm[conTrm.length-1].trm_factura);
+    }
+    if(!dm){
+      dm = await DB.insert('impo_datos_mercancia', {bl, embarque_id: emb?emb.id:null, producto: emb?emb.producto:null, punto: emb?emb.tienda:null, ...patch});
+      if(dm) STATE.datosMercancia.push(dm);
+    } else {
+      const updated = await DB.update('impo_datos_mercancia', dm.id, patch);
+      if(updated) Object.assign(dm, updated);
+    }
+  }
+
+  const rubroKeys = Object.keys(auto.servicio);
+  if(rubroKeys.length){
+    let cm = STATE.costoMercancia.find(r=>r.bl===bl);
+    const patch = {};
+    rubroKeys.forEach(k=>{ patch[k] = auto.servicio[k].sum; });
+    if(!cm){
+      cm = await DB.insert('impo_costo_mercancia', {bl, embarque_id: emb?emb.id:null, producto: emb?emb.producto:null, punto: emb?emb.tienda:null, ...patch});
+      if(cm) STATE.costoMercancia.push(cm);
+    } else {
+      const updated = await DB.update('impo_costo_mercancia', cm.id, patch);
+      if(updated) Object.assign(cm, updated);
+    }
+  }
+}
+
+function liquidacionTotales(bl){
+  const dm = STATE.datosMercancia.find(r=>r.bl===bl);
+  const cm = STATE.costoMercancia.find(r=>r.bl===bl);
+  const valorCIF = dm ? Number(dm.valor_total_mercancia_cop||0) : 0;
+  const valorFOB = dm ? Number(dm.valor_mci_cop||0) : 0;
+  const fleteSeguro = dm ? Number(dm.flete_seguro_cop||0) : 0;
+  const arancel = cm ? Number(cm.arancel||0) : 0;
+  const iva = cm ? Number(cm.iva||0) : 0;
+  const tributosAduaneros = arancel + iva;
+  const puertoAlmReconocimiento = cm ? Number(cm.puerto_alm_reconocimiento||0) : 0;
+  const serviciosJas = cm ? Number(cm.servicios_jas||0) : 0;
+  const fleteTerrestre = cm ? Number(cm.flete_terrestre||0) : 0;
+  const gtosBancarios4x1000 = cm ? Number(cm.gtos_bancarios_4x1000||0) : 0;
+  const costoLogisticaCtaImpo = cm ? Number(cm.costo_logistica_cta_impo||0) : 0;
+  const gtosCofa = cm ? Number(cm.gtos_cofa||0) : 0;
+  const granTotalCosto = cm ? Number(cm.gran_total||0) : 0;
+  const totalImportacion = valorCIF + granTotalCosto;
+  // "Costo total importación" (gran_total) ya incluye el IVA de nacionalización (cm.iva) sumado
+  // dentro de sí mismo -- ver generation_expression de impo_costo_mercancia.gran_total. El "Neto"
+  // resta ese IVA para mostrar el costo sin ese componente, a pedido de Juan Camilo.
+  const totalImportacionNeto = totalImportacion - iva;
+  // "Costo Total Logístico Impo" (a pedido de Juan Camilo): solo la parte logística/operativa
+  // del proceso -- Flete+Seguro, Puerto/Alm./Reconocimiento, Servicios agente (JAS), Flete
+  // Terrestre, Costo Logística-Cta Impo y Gtos COFA -- sin incluir Arancel, IVA, Sanciones,
+  // 4x1000/Gtos bancarios ni IVA ASLO (esos son tributos/costos financieros, no logísticos).
+  // "% LOG IMPO" es ese costo logístico como porcentaje del Valor FOB de la mercancía; ambos
+  // son independientes de la moneda seleccionada (son la misma proporción en COP o en USD).
+  const costoTotalLogisticoImpo = fleteSeguro + puertoAlmReconocimiento + serviciosJas + fleteTerrestre + costoLogisticaCtaImpo + gtosCofa;
+  const pctLogImpo = valorFOB ? (costoTotalLogisticoImpo / valorFOB * 100) : null;
+  return {dm, cm, valorFOB, fleteSeguro, valorCIF, arancel, iva, tributosAduaneros, puertoAlmReconocimiento, serviciosJas, fleteTerrestre, gtosBancarios4x1000, costoLogisticaCtaImpo, gtosCofa, costoTotalLogisticoImpo, pctLogImpo, granTotalCosto, totalImportacion, totalImportacionNeto};
+}
+
+/* ============================================================
+   Columnas configurables (mostrar/ocultar + ancho ajustable) de la
+   tabla de Liquidación Incoterm — a pedido de Juan Camilo. La
+   selección de columnas visibles y el ancho de cada una se guardan
+   en localStorage (por navegador/dispositivo, no en Supabase, porque
+   es una preferencia de visualización de quien está usando la app
+   en ese momento, no un dato del negocio) para no tener que volver
+   a configurarlas cada vez. "BL" y el botón "Ver / editar" son fijos
+   (no se pueden ocultar) porque sin ellos la tabla deja de ser útil.
+   ============================================================ */
+const LQ_COL_PREFS_KEY = 'bitacora_impo_lq_columnas_v1';
+function loadLqColPrefs(){
+  try{
+    const raw = localStorage.getItem(LQ_COL_PREFS_KEY);
+    if(!raw) return {hidden:[], widths:{}};
+    const parsed = JSON.parse(raw);
+    return {
+      hidden: Array.isArray(parsed.hidden) ? parsed.hidden : [],
+      widths: (parsed.widths && typeof parsed.widths==='object') ? parsed.widths : {},
+    };
+  }catch(e){ return {hidden:[], widths:{}}; }
+}
+function saveLqColPrefs(){
+  try{ localStorage.setItem(LQ_COL_PREFS_KEY, JSON.stringify(lqColPrefs)); }
+  catch(e){ /* almacenamiento no disponible (modo privado, cuota llena, etc.) -- no es crítico, se ignora */ }
+}
+let lqColPrefs = loadLqColPrefs();
+
+function lqColumnDefs(){
+  return [
+    {key:'bl', label:'BL', locked:true, width:150, mono:true, render:(c)=>esc(c.bl)},
+    {key:'producto', label:'Producto', width:150, render:(c)=>esc((c.t.dm&&c.t.dm.producto)||(c.emb&&c.emb.producto)||'')},
+    {key:'punto', label:'Punto', width:120, render:(c)=>esc((c.t.dm&&c.t.dm.punto)||(c.emb&&c.emb.tienda)||'')},
+    {key:'trm', label:'TRM', width:100, align:'right', mono:true, render:(c)=>c.trm?money(c.trm,2):'—'},
+    {key:'valorFOB', label:'Valor FOB', suf:true, width:150, align:'right', mono:true, render:(c)=>moneyDual(c.t.valorFOB, c.trm, c.currency)},
+    {key:'fleteSeguro', label:'Flete+Seguro', suf:true, width:150, align:'right', mono:true, render:(c)=>moneyDual(c.t.fleteSeguro, c.trm, c.currency)},
+    {key:'valorCIF', label:'Valor CIF', suf:true, width:150, align:'right', mono:true, bold:true, render:(c)=>moneyDual(c.t.valorCIF, c.trm, c.currency)},
+    {key:'arancel', label:'Arancel', suf:true, width:140, align:'right', mono:true, render:(c)=>moneyDual(c.t.arancel, c.trm, c.currency)},
+    {key:'iva', label:'IVA', suf:true, width:130, align:'right', mono:true, render:(c)=>moneyDual(c.t.iva, c.trm, c.currency)},
+    {key:'tributosAduaneros', label:'Tributos Aduaneros', suf:true, width:170, align:'right', mono:true, bold:true, render:(c)=>moneyDual(c.t.tributosAduaneros, c.trm, c.currency)},
+    {key:'puertoAlmReconocimiento', label:'Puerto / Alm. / Reconocimiento', suf:true, width:190, align:'right', mono:true, render:(c)=>moneyDual(c.t.puertoAlmReconocimiento, c.trm, c.currency)},
+    {key:'serviciosJas', label:'Servicios agente (JAS)', suf:true, width:180, align:'right', mono:true, render:(c)=>moneyDual(c.t.serviciosJas, c.trm, c.currency)},
+    {key:'fleteTerrestre', label:'Flete Terrestre', suf:true, width:150, align:'right', mono:true, render:(c)=>moneyDual(c.t.fleteTerrestre, c.trm, c.currency)},
+    {key:'gtosBancarios4x1000', label:'4x1000 / Gtos. bancarios', suf:true, width:190, align:'right', mono:true, render:(c)=>moneyDual(c.t.gtosBancarios4x1000, c.trm, c.currency)},
+    {key:'costoLogisticaCtaImpo', label:'Costo Logística-Cta Impo', suf:true, width:190, align:'right', mono:true, render:(c)=>moneyDual(c.t.costoLogisticaCtaImpo, c.trm, c.currency)},
+    {key:'gtosCofa', label:'Gtos COFA', suf:true, width:140, align:'right', mono:true, render:(c)=>moneyDual(c.t.gtosCofa, c.trm, c.currency)},
+    {key:'costoTotalLogisticoImpo', label:'Costo Total Logístico Impo', suf:true, width:200, align:'right', mono:true, bold:true, render:(c)=>moneyDual(c.t.costoTotalLogisticoImpo, c.trm, c.currency)},
+    {key:'pctLogImpo', label:'% LOG IMPO', width:120, align:'right', mono:true, render:(c)=> c.t.pctLogImpo===null ? '—' : `${c.t.pctLogImpo.toFixed(1)}%`},
+    {key:'granTotalCosto', label:'Costos nacionaliz.+logística', suf:true, width:190, align:'right', mono:true, bold:true, render:(c)=>moneyDual(c.t.granTotalCosto, c.trm, c.currency)},
+    {key:'totalImportacion', label:'Costo total importación', suf:true, sufSuffix:' (incluye IVA)', width:200, align:'right', mono:true, bold:true, accent:true, render:(c)=>moneyDual(c.t.totalImportacion, c.trm, c.currency)},
+    {key:'totalImportacionNeto', label:'Costo total importación Neto', suf:true, sufSuffix:' (excluye IVA)', width:210, align:'right', mono:true, bold:true, render:(c)=>moneyDual(c.t.totalImportacionNeto, c.trm, c.currency)},
+    {key:'acciones', label:'', locked:true, width:120, render:(c)=>`<button class="btn small" data-action="ver-bl" data-bl="${esc(c.bl)}">Ver / editar</button>`},
+  ];
+}
+
+function renderLiquidacionTable(currency){
+  currency = currency || 'COP';
+  const bls = allLiquidacionBLs();
+  if(!bls.length) return `<div class="empty">No hay datos de mercancía / costo cargados todavía.</div>`;
+  const suf = currency==='USD' ? ' (USD, según TRM del BL)' : ' (COP)';
+  const cols = lqColumnDefs().filter(c => c.locked || !lqColPrefs.hidden.includes(c.key));
+  const colgroupHtml = cols.map(c=>{
+    const w = Number(lqColPrefs.widths[c.key]) || c.width;
+    return `<col data-colkey="${c.key}" style="width:${w}px">`;
+  }).join('');
+  const theadHtml = cols.map(c=>{
+    const label = `${c.label}${c.suf?suf:''}${c.sufSuffix||''}`;
+    return `<th>${esc(label)}<span class="col-resize-handle" data-colkey="${c.key}" title="Arrastrar para ajustar el ancho"></span></th>`;
+  }).join('');
+  const rows = bls.map(bl=>{
+    const t = liquidacionTotales(bl);
+    const emb = STATE.embarques.find(e=>e.bl===bl);
+    const trm = getTrmForBl(bl);
+    const ctx = {t, trm, currency, bl, emb};
+    const tds = cols.map(c=>{
+      const styleParts = [];
+      if(c.align==='right') styleParts.push('text-align:right');
+      if(c.bold) styleParts.push('font-weight:700');
+      if(c.accent) styleParts.push('color:var(--accent)');
+      const cls = c.mono ? ' class="mono"' : '';
+      const style = styleParts.length ? ` style="${styleParts.join(';')}"` : '';
+      return `<td${cls}${style}>${c.render(ctx)}</td>`;
+    }).join('');
+    return `<tr data-bl="${esc(bl)}" style="cursor:pointer">${tds}</tr>`;
+  }).join('');
+  return `<div class="table-scroll"><table class="grid lq-resizable" id="lqTable">
+    <colgroup>${colgroupHtml}</colgroup>
+    <thead><tr>${theadHtml}</tr></thead>
+    <tbody>${rows}</tbody>
+  </table></div>`;
+}
+
+function openLqColumnsModal(onChange){
+  const cols = lqColumnDefs().filter(c=>!c.locked);
+  const itemsHtml = cols.map(c=>`
+    <label style="display:flex;align-items:center;gap:8px;padding:5px 0;font-size:13px;cursor:pointer">
+      <input type="checkbox" data-colkey="${c.key}" ${lqColPrefs.hidden.includes(c.key)?'':'checked'}>
+      ${esc(c.label)}
+    </label>`).join('');
+  openModal(`
+    <h3>Columnas visibles — Liquidación Incoterm</h3>
+    <p class="helptext" style="margin-top:-4px">Elige qué columnas mostrar en la tabla. "BL" y el botón "Ver / editar" siempre quedan visibles. Esta selección, y el ancho de cada columna (arrastrando el borde derecho de su encabezado), se guardan en este navegador para que no tengas que volver a configurarlos cada vez. La exportación a Excel siempre incluye todas las columnas, se muestren o no aquí.</p>
+    <div id="lqColCheckboxes" style="max-height:340px;overflow:auto;margin:12px 0;display:grid;grid-template-columns:1fr 1fr;gap:0 16px">${itemsHtml}</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end">
+      <button class="btn" id="lqColShowAll">Mostrar todas</button>
+      <button class="btn" id="lqColResetWidths">Restablecer anchos</button>
+      <button class="btn primary" id="lqColClose">Listo</button>
+    </div>
+  `);
+  document.getElementById('lqColCheckboxes').querySelectorAll('input[type="checkbox"]').forEach(cb=>{
+    cb.addEventListener('change', ()=>{
+      const key = cb.dataset.colkey;
+      lqColPrefs.hidden = lqColPrefs.hidden.filter(k=>k!==key);
+      if(!cb.checked) lqColPrefs.hidden.push(key);
+      saveLqColPrefs();
+      onChange();
+    });
+  });
+  document.getElementById('lqColShowAll').addEventListener('click', ()=>{
+    lqColPrefs.hidden = [];
+    saveLqColPrefs();
+    onChange();
+    openLqColumnsModal(onChange);
+  });
+  document.getElementById('lqColResetWidths').addEventListener('click', ()=>{
+    lqColPrefs.widths = {};
+    saveLqColPrefs();
+    onChange();
+  });
+  document.getElementById('lqColClose').addEventListener('click', closeModal);
+}
+
+function wireLqColumnResize(){
+  const wrap = document.getElementById('lqTableWrap');
+  if(!wrap) return;
+  wrap.querySelectorAll('.col-resize-handle').forEach(handle=>{
+    handle.addEventListener('mousedown', (e)=>{
+      e.preventDefault();
+      e.stopPropagation();
+      const key = handle.dataset.colkey;
+      const table = wrap.querySelector('#lqTable');
+      const col = table ? table.querySelector(`colgroup col[data-colkey="${key}"]`) : null;
+      if(!col) return;
+      const startX = e.clientX;
+      const startWidth = col.getBoundingClientRect().width;
+      const minWidth = 60;
+      function onMove(ev){
+        const newWidth = Math.max(minWidth, Math.round(startWidth + (ev.clientX - startX)));
+        col.style.width = newWidth + 'px';
+      }
+      function onUp(){
+        document.removeEventListener('mousemove', onMove);
+        document.removeEventListener('mouseup', onUp);
+        lqColPrefs.widths[key] = parseInt(col.style.width, 10);
+        saveLqColPrefs();
+      }
+      document.addEventListener('mousemove', onMove);
+      document.addEventListener('mouseup', onUp);
+    });
+  });
+}
+
+function moneyFieldRow(label, key, obj, table, autoCount){
+  const val = obj ? (obj[key] ?? 0) : 0;
+  if(autoCount){
+    return `<div>
+      <div class="grid2" style="align-items:center">
+        <label class="field-label" style="margin:0">${label}</label>
+        <input class="field mono" type="number" step="0.01" value="${val}" style="text-align:right;background:var(--bg-soft,#f3f4f6);color:var(--muted,#666)" disabled title="Se calcula automáticamente sumando las facturas de Control Financiero etiquetadas a este rubro para este BL.">
+      </div>
+      <div class="helptext" style="text-align:right;margin-top:2px">🔗 automático desde Control Financiero (${autoCount} factura${autoCount>1?'s':''})</div>
+    </div>`;
+  }
+  return `<div class="grid2" style="align-items:center">
+    <label class="field-label" style="margin:0">${label}</label>
+    <input class="field mono" type="number" step="0.01" data-lqtable="${table}" data-field="${key}" value="${val}" style="text-align:right">
+  </div>`;
+}
+
+function renderLiquidacionDetail(bl, currency){
+  currency = currency || 'COP';
+  const t = liquidacionTotales(bl);
+  const emb = STATE.embarques.find(e=>e.bl===bl);
+  const dm = t.dm, cm = t.cm;
+  const trm = getTrmForBl(bl);
+  const auto = computeAutoRubros(bl);
+  const rubroCount = (key) => (auto.servicio[key] ? auto.servicio[key].count : 0);
+  const pct = (v) => t.totalImportacion ? Math.round(v/t.totalImportacion*100) : 0;
+  const dual = (v) => moneyDual(v, trm, currency);
+
+  return `
+    <div class="panel">
+      <div class="panel-head">
+        <div><h2 class="mono">${esc(bl)}</h2><div class="desc" style="display:flex;align-items:center;flex-wrap:wrap;gap:4px">
+          <span>${esc((dm&&dm.producto)||(emb&&emb.producto)||'')} ${emb?'· '+esc(emb.tienda||''):''} · Incoterm mercancía:</span>
+          <select class="field mono" data-lqtable="dm" data-field="incoterm" style="width:auto;display:inline-block;padding:2px 6px">
+            ${INCOTERM_OPTS.map(o=>`<option value="${o}" ${((dm&&dm.incoterm)||'FOB')===o?'selected':''}>${o}</option>`).join('')}
+          </select>
+          ${trm?`<span>· TRM ${money(trm,2)}</span>`:''}
+        </div></div>
+        <div style="display:flex;align-items:center;gap:10px">
+          ${currencyToggleHtml('lqDetailCurrency', currency)}
+          <button class="btn small danger" id="lqDeleteBL">Eliminar liquidación</button>
+          <button class="btn small" id="lqClose">Cerrar</button>
+        </div>
+      </div>
+      <div class="panel-body">
+        <div class="grid2" style="align-items:start;gap:20px">
+          <div>
+            <h3 style="font-size:13px;margin-bottom:8px">Valor de mercancía (Datos_Mercancia)</h3>
+            <div style="display:flex;flex-direction:column;gap:8px">
+              ${moneyFieldRow('FOB (USD)','fob',dm,'dm', auto.mercancia.count)}
+              ${moneyFieldRow('Flete internacional (USD)','freight',dm,'dm', auto.mercancia.count)}
+              ${moneyFieldRow('Seguro (USD)','insurance',dm,'dm', auto.mercancia.count)}
+              ${moneyFieldRow('TRM (editable, propia de este BL)','trm',dm,'dm')}
+            </div>
+            <p class="helptext">Valor CIF = (FOB + Flete + Seguro) × TRM = <strong class="mono">${dual(t.valorCIF)}</strong>${!trm?' — carga la TRM de este BL arriba para poder verlo en USD.':''}</p>
+            ${auto.mercancia.count?`<p class="helptext">FOB, Flete y Seguro se calculan sumando las ${auto.mercancia.count} factura${auto.mercancia.count>1?'s':''} de tipo "Mercancía" registradas en Control Financiero para este BL. Para corregirlos, edita o elimina esas facturas en Control Financiero — la TRM sigue siendo editable aquí.</p>`:''}
+            ${(dm&&dm.incoterm&&dm.incoterm!=='FOB')?`<p class="helptext">El Incoterm mercancía es solo informativo: esta fórmula siempre suma Flete y Seguro al valor de "FOB (USD)", sin importar el término elegido. Si la factura ya viene en ${esc(dm.incoterm)} (con el flete incluido en ese valor), deja "Flete internacional (USD)" en 0 para no sumarlo dos veces.</p>`:''}
+          </div>
+          <div>
+            <h3 style="font-size:13px;margin-bottom:8px">Nacionalización, logística y entrega (Costo_Mercancia)</h3>
+            <div style="display:flex;flex-direction:column;gap:8px">
+              ${moneyFieldRow('Arancel','arancel',cm,'cm', rubroCount('arancel'))}
+              ${moneyFieldRow('IVA','iva',cm,'cm', rubroCount('iva'))}
+              ${moneyFieldRow('Sanciones','sanciones',cm,'cm', rubroCount('sanciones'))}
+              ${moneyFieldRow('Flete internacional (factura)','flete_internacional',cm,'cm', rubroCount('flete_internacional'))}
+              ${moneyFieldRow('Servicios agente (JAS)','servicios_jas',cm,'cm', rubroCount('servicios_jas'))}
+              ${moneyFieldRow('Puerto / Alm. / Reconocimiento','puerto_alm_reconocimiento',cm,'cm', rubroCount('puerto_alm_reconocimiento'))}
+              ${moneyFieldRow('Flete terrestre','flete_terrestre',cm,'cm', rubroCount('flete_terrestre'))}
+              ${moneyFieldRow('4x1000 / Gtos. bancarios','gtos_bancarios_4x1000',cm,'cm', rubroCount('gtos_bancarios_4x1000'))}
+              ${(cm && Number(cm.iva_aslo)) ? moneyFieldRow('IVA ASLO','iva_aslo',cm,'cm', rubroCount('iva_aslo')) : ''}
+              ${moneyFieldRow('Costo logística - Cta Impo','costo_logistica_cta_impo',cm,'cm', rubroCount('costo_logistica_cta_impo'))}
+              ${moneyFieldRow('Gtos COFA','gtos_cofa',cm,'cm', rubroCount('gtos_cofa'))}
+            </div>
+            ${Object.keys(auto.servicio).length?`<p class="helptext">Los rubros marcados con 🔗 se calculan sumando las facturas de tipo "Servicio" de Control Financiero etiquetadas con ese rubro para este BL (usando su valor neto, después de descuento/IVA/retenciones). Para corregirlos, edita, reetiqueta o elimina esas facturas en Control Financiero. Los rubros sin facturas etiquetadas siguen siendo editables manualmente aquí.</p>`:''}
+            ${(cm && Number(cm.iva_aslo)) ? `<p class="helptext">"IVA ASLO" se retiró como rubro seleccionable (ya no se puede asignar a nuevas facturas) porque no se pudo confirmar su significado — solo sigue visible aquí porque este BL ya tenía un valor cargado (${moneyCOP(cm.iva_aslo)}) desde antes, para no ocultarlo dentro del Gran Total sin que se vea. Corrígelo o pásalo a otro rubro si corresponde; si lo dejas en 0, el campo dejará de aparecer.</p>` : ''}
+          </div>
+        </div>
+
+        <h3 style="font-size:13px;margin:18px 0 8px">Cascada de costo por etapa Incoterm ${currency==='USD'?'(USD, según TRM del BL)':'(COP)'}</h3>
+        <div class="waterfall">
+          <div class="wf-row"><span class="wf-label">Origen · Valor FOB mercancía</span>
+            <div class="wf-track"><div class="wf-fill" style="width:${pct(t.valorFOB)}%;background:var(--neutral-stage)"></div></div>
+            <span class="wf-value">${dual(t.valorFOB)}</span></div>
+          <div class="wf-row"><span class="wf-label">Flete internacional + Seguro (→ CIF)</span>
+            <div class="wf-track"><div class="wf-fill" style="width:${pct(t.fleteSeguro)}%;background:var(--info)"></div></div>
+            <span class="wf-value">${dual(t.fleteSeguro)}</span></div>
+          <div class="wf-row"><span class="wf-label">Nacionalización + logística + entrega (DDP)</span>
+            <div class="wf-track"><div class="wf-fill" style="width:${pct(t.granTotalCosto)}%;background:var(--warning)"></div></div>
+            <span class="wf-value">${dual(t.granTotalCosto)}</span></div>
+          <div class="wf-row" style="border-top:1px solid var(--border);padding-top:8px">
+            <span class="wf-label" style="font-weight:700">Costo total de importación (DDP bodega)</span>
+            <div class="wf-track"><div class="wf-fill" style="width:100%;background:var(--accent)"></div></div>
+            <span class="wf-value" style="font-weight:700;font-size:15px">${dual(t.totalImportacion)}</span></div>
+        </div>
+        <p class="helptext">Este valor es orientativo: suma el valor CIF de la mercancía (hoja Datos_Mercancia) más el Gran Total de costos y gastos (hoja Costo_Mercancia). Verifícalo contra la liquidación oficial de la declaración de importación antes de usarlo para contabilidad. La conversión a USD usa la TRM que cargues para este BL (no una TRM global ni la del día).</p>
+      </div>
+    </div>
+  `;
+}
+
+VIEWS.incoterm = function(){
+  const el = document.getElementById('view-incoterm');
+  el.innerHTML = `
+    <div class="panel">
+      <div class="panel-head">
+        <div><h2>Liquidación Incoterm por importación</h2><div class="desc">FOB → Flete/Seguro → CIF (Datos_Mercancia) + Nacionalización/Logística/Entrega (Costo_Mercancia) = Costo total de importación puesto en bodega. Cada BL tiene su propia TRM editable para ver la liquidación también en USD.</div></div>
+        <div class="toolbar">
+          <div id="lqTableCurrencyWrap"></div>
+          <button class="btn primary" id="lqAdd">+ Agregar liquidación</button>
+          <button class="btn" id="lqColumnsBtn">Columnas</button>
+          <button class="btn" id="lqExport">Exportar Excel</button>
+        </div>
+      </div>
+      <div class="panel-body flush" id="lqTableWrap"></div>
+    </div>
+    <div id="lqDetailWrap"></div>
+  `;
+
+  function paint({scrollToDetail}={}){
+    document.getElementById('lqTableWrap').innerHTML = renderLiquidacionTable(lqCurrency);
+    document.getElementById('lqDetailWrap').innerHTML = incotermSelectedBL ? renderLiquidacionDetail(incotermSelectedBL, lqCurrency) : '';
+    wireLqColumnResize();
+    // El toggle superior se regenera en cada pintado (igual que el del detalle) para no ir
+    // acumulando listeners repetidos sobre el mismo botón.
+    const topToggleWrap = document.getElementById('lqTableCurrencyWrap');
+    if(topToggleWrap){
+      topToggleWrap.innerHTML = currencyToggleHtml('lqTableCurrency', lqCurrency);
+      topToggleWrap.querySelectorAll('[data-currency]').forEach(b=>{
+        b.addEventListener('click', ()=>{ lqCurrency = b.dataset.currency; paint(); });
+      });
+    }
+    wireDetail();
+    if(scrollToDetail){
+      const dw = document.getElementById('lqDetailWrap');
+      if(dw) dw.scrollIntoView({behavior:'smooth', block:'start'});
+    }
+  }
+
+  function wireDetail(){
+    const dw = document.getElementById('lqDetailWrap');
+    if(!dw) return;
+    const closeBtn = document.getElementById('lqClose');
+    if(closeBtn) closeBtn.addEventListener('click', ()=>{ incotermSelectedBL=null; paint(); });
+    const delBtn = document.getElementById('lqDeleteBL');
+    if(delBtn) delBtn.addEventListener('click', async ()=>{
+      if(!confirm(`¿Eliminar la liquidación de ${incotermSelectedBL}? Esto borra los datos de mercancía y de costo de nacionalización/logística de este BL (no borra el embarque ni sus rubros de Control Financiero).`)) return;
+      const dm = STATE.datosMercancia.find(r=>r.bl===incotermSelectedBL);
+      const cm = STATE.costoMercancia.find(r=>r.bl===incotermSelectedBL);
+      let ok = true;
+      if(dm) ok = (await DB.remove('impo_datos_mercancia', dm.id)) && ok;
+      if(cm) ok = (await DB.remove('impo_costo_mercancia', cm.id)) && ok;
+      if(ok){
+        STATE.datosMercancia = STATE.datosMercancia.filter(r=>r.bl!==incotermSelectedBL);
+        STATE.costoMercancia = STATE.costoMercancia.filter(r=>r.bl!==incotermSelectedBL);
+        incotermSelectedBL = null;
+        paint();
+        toast('Liquidación eliminada','ok');
+      }
+    });
+    const detailToggle = document.getElementById('lqDetailCurrency');
+    if(detailToggle) detailToggle.querySelectorAll('[data-currency]').forEach(b=>{
+      b.addEventListener('click', ()=>{ lqCurrency = b.dataset.currency; paint(); });
+    });
+    dw.querySelectorAll('input[data-lqtable], select[data-lqtable]').forEach(inp=>{
+      inp.addEventListener('change', async ()=>{
+        const table = inp.dataset.lqtable==='dm' ? 'impo_datos_mercancia' : 'impo_costo_mercancia';
+        const arr = inp.dataset.lqtable==='dm' ? STATE.datosMercancia : STATE.costoMercancia;
+        let rec = arr.find(r=>r.bl===incotermSelectedBL);
+        // Los campos de texto (por ahora solo "incoterm") se guardan tal cual; el resto de
+        // campos de este panel son montos y se guardan como número.
+        const value = inp.dataset.field==='incoterm' ? inp.value : (Number(inp.value)||0);
+        if(!rec){
+          const emb = STATE.embarques.find(e=>e.bl===incotermSelectedBL);
+          rec = await DB.insert(table, {bl:incotermSelectedBL, embarque_id: emb?emb.id:null, [inp.dataset.field]: value});
+          if(rec) arr.push(rec);
+        } else {
+          const updated = await DB.update(table, rec.id, {[inp.dataset.field]: value});
+          if(updated) Object.assign(rec, updated);
+        }
+        paint();
+      });
+    });
+  }
+
+  document.getElementById('lqTableWrap').addEventListener('click', (e)=>{
+    const btn = e.target.closest('[data-action="ver-bl"]');
+    if(!btn) return;
+    incotermSelectedBL = btn.dataset.bl;
+    paint({scrollToDetail:true});
+  });
+
+  document.getElementById('lqColumnsBtn').addEventListener('click', ()=>{
+    openLqColumnsModal(paint);
+  });
+
+  document.getElementById('lqAdd').addEventListener('click', ()=>{
+    openModal(`
+      <h3>Agregar liquidación para un embarque</h3>
+      <div class="grid2">
+        <div>
+          <label class="field-label">Embarque (BL)</label>
+          <select class="field" id="lqNewBl" style="width:100%">
+            <option value="">Seleccionar…</option>
+            ${STATE.embarques.filter(e=>!allLiquidacionBLs().includes(e.bl)).map(e=>`<option value="${esc(e.bl)}">${esc(e.bl)} — ${esc(e.producto||'')}</option>`).join('')}
+          </select>
+        </div>
+      </div>
+      <div class="toolbar" style="margin-top:14px;justify-content:flex-end">
+        <button class="btn" onclick="closeModal()">Cancelar</button>
+        <button class="btn primary" id="lqNewConfirm">Crear</button>
+      </div>
+    `);
+    document.getElementById('lqNewConfirm').addEventListener('click', async ()=>{
+      const bl = document.getElementById('lqNewBl').value;
+      if(!bl){ toast('Selecciona un embarque','err'); return; }
+      const emb = STATE.embarques.find(e=>e.bl===bl);
+      const dm = await DB.insert('impo_datos_mercancia', {bl, embarque_id:emb.id, producto:emb.producto, punto:emb.tienda});
+      const cm = await DB.insert('impo_costo_mercancia', {bl, embarque_id:emb.id, producto:emb.producto, punto:emb.tienda});
+      if(dm) STATE.datosMercancia.push(dm);
+      if(cm) STATE.costoMercancia.push(cm);
+      closeModal();
+      incotermSelectedBL = bl;
+      paint();
+      toast('Liquidación creada, completa los valores','ok');
+    });
+  });
+
+  document.getElementById('lqExport').addEventListener('click', ()=>{
+    const rows = allLiquidacionBLs().map(bl=>{
+      const t = liquidacionTotales(bl);
+      const trm = getTrmForBl(bl);
+      return {
+        'BL': bl, 'PRODUCTO': (t.dm&&t.dm.producto)||'', 'PUNTO': (t.dm&&t.dm.punto)||'',
+        'INCOTERM': (t.dm&&t.dm.incoterm)||'', 'FOB USD': t.dm?t.dm.fob:0, 'FREIGHT USD': t.dm?t.dm.freight:0, 'INSURANCE USD': t.dm?t.dm.insurance:0,
+        'TRM': t.dm?t.dm.trm:0, 'VALOR FOB COP': t.valorFOB, 'FLETE+SEGURO COP': t.fleteSeguro, 'VALOR CIF COP': t.valorCIF,
+        'ARANCEL': t.cm?t.cm.arancel:0, 'IVA': t.cm?t.cm.iva:0, 'TRIBUTOS ADUANEROS (ARANCEL+IVA)': t.tributosAduaneros, 'SANCIONES': t.cm?t.cm.sanciones:0,
+        'FLETE INTERNACIONAL (FRA)': t.cm?t.cm.flete_internacional:0, 'SERVICIOS AGENTE': t.cm?t.cm.servicios_jas:0,
+        'PUERTO/ALM/RECONOCIMIENTO': t.cm?t.cm.puerto_alm_reconocimiento:0, 'FLETE TERRESTRE': t.cm?t.cm.flete_terrestre:0,
+        '4X1000/GTOS BANCARIOS': t.cm?t.cm.gtos_bancarios_4x1000:0, 'IVA ASLO': t.cm?t.cm.iva_aslo:0,
+        'COSTO LOGISTICA': t.cm?t.cm.costo_logistica_cta_impo:0, 'GTOS COFA': t.cm?t.cm.gtos_cofa:0,
+        'COSTO TOTAL LOGISTICO IMPO': t.costoTotalLogisticoImpo,
+        '% LOG IMPO': t.pctLogImpo===null ? '' : Number(t.pctLogImpo.toFixed(2)),
+        'GRAN TOTAL COSTOS COP': t.granTotalCosto,
+        'COSTO TOTAL IMPORTACION COP (INCLUYE IVA)': t.totalImportacion,
+        'COSTO TOTAL IMPORTACION USD (INCLUYE IVA)': trm ? Number((t.totalImportacion/trm).toFixed(2)) : '',
+        'COSTO TOTAL IMPORTACION NETO COP (EXCLUYE IVA)': t.totalImportacionNeto,
+        'COSTO TOTAL IMPORTACION NETO USD (EXCLUYE IVA)': trm ? Number((t.totalImportacionNeto/trm).toFixed(2)) : '',
+      };
+    });
+    const ws = XLSX.utils.json_to_sheet(rows);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Liquidación Incoterm');
+    XLSX.writeFile(wb, `Liquidacion_Incoterm_${todayISO()}.xlsx`);
+    toast('Excel exportado','ok');
+  });
+
+  paint();
+};
+</script>
+
+<script>
+/* ============================================================
+   VISTA: PROVEEDORES Y CONCEPTOS
+   ============================================================ */
+VIEWS.proveedores = function(){
+  const el = document.getElementById('view-proveedores');
+  el.innerHTML = `
+    <div class="panel">
+      <div class="panel-head">
+        <div><h2>Proveedores y Conceptos</h2><div class="desc">Esta tabla alimenta el autocompletado de "Concepto", "Etapa Incoterm", "Tipo de factura" y "Rubro Costo_Mercancia" en Control Financiero e Importar Facturas al escribir el proveedor. El "Rubro Costo_Mercancia" es lo que permite que una factura de servicio se sume sola a Liquidación Incoterm — solo aplica cuando el tipo de factura es "Servicio / costo de importación".</div></div>
+        <div class="toolbar"><button class="btn primary" id="provAdd">+ Nuevo proveedor</button></div>
+      </div>
+      <div class="panel-body flush" id="provTableWrap"></div>
+    </div>
+  `;
+  function paint(){
+    const rows = STATE.proveedores;
+    document.getElementById('provTableWrap').innerHTML = `<div class="table-scroll"><table class="grid">
+      <thead><tr><th style="min-width:240px">Proveedor</th><th style="min-width:140px">NIT</th><th style="min-width:180px">Concepto</th><th style="min-width:260px">Etapa Incoterm</th><th style="min-width:210px">Tipo de factura</th><th style="min-width:230px">Rubro Costo_Mercancia</th><th style="min-width:50px"></th></tr></thead>
+      <tbody>${rows.map(r=>`
+        <tr data-id="${r.id}">
+          <td><input class="cell" data-field="proveedor" value="${esc(r.proveedor)}"></td>
+          <td><input class="cell mono" data-field="nit" value="${esc(r.nit||'')}"></td>
+          <td><input class="cell" data-field="concepto" value="${esc(r.concepto||'')}"></td>
+          <td><select class="cell" data-field="etapa_incoterm">
+            <option value="">—</option>
+            ${ETAPA_INCOTERM_OPTS.map(o=>`<option value="${esc(o)}" ${o===r.etapa_incoterm?'selected':''}>${esc(o)}</option>`).join('')}
+          </select></td>
+          <td><select class="cell" data-field="tipo_factura_default">
+            ${TIPO_FACTURA_OPTS.map(o=>`<option value="${o.value}" ${(r.tipo_factura_default||'servicio')===o.value?'selected':''}>${esc(o.label)}</option>`).join('')}
+          </select></td>
+          <td><select class="cell" data-field="rubro_costo_mercancia" ${(r.tipo_factura_default==='mercancia')?'disabled':''}>
+            <option value="">— sin asignar (no se suma automáticamente) —</option>
+            ${RUBRO_COSTO_MERCANCIA_OPTS.map(o=>`<option value="${o.value}" ${o.value===r.rubro_costo_mercancia?'selected':''}>${esc(o.label)}</option>`).join('')}
+          </select></td>
+          <td><button class="btn small danger" data-action="del-prov" data-id="${r.id}">✕</button></td>
+        </tr>`).join('') || `<tr><td colspan="7"><div class="empty">Sin proveedores registrados.</div></td></tr>`}</tbody>
+    </table></div>`;
+  }
+  paint();
+
+  document.getElementById('provAdd').addEventListener('click', async ()=>{
+    const row = await DB.insert('impo_proveedores_conceptos', {proveedor:'Nuevo proveedor '+(STATE.proveedores.length+1)});
+    if(row){ STATE.proveedores.push(row); paint(); }
+  });
+
+  document.getElementById('provTableWrap').addEventListener('change', async (e)=>{
+    const t = e.target; if(!t.dataset.field) return;
+    const id = t.closest('tr').dataset.id;
+    let value = t.value || null;
+    const patch = {[t.dataset.field]: value};
+    // Si se marca el proveedor como "Mercancía", ya no aplica ningún rubro de Costo_Mercancia
+    // (ese rubro es exclusivo de facturas de servicio) — se limpia para no dejar una
+    // combinación inconsistente.
+    if(t.dataset.field==='tipo_factura_default' && value==='mercancia') patch.rubro_costo_mercancia = null;
+    const updated = await DB.update('impo_proveedores_conceptos', id, patch);
+    if(updated){ const idx = STATE.proveedores.findIndex(r=>r.id===id); if(idx>-1) STATE.proveedores[idx]=updated; toast('Guardado','ok'); paint(); }
+  });
+  document.getElementById('provTableWrap').addEventListener('click', async (e)=>{
+    const btn = e.target.closest('[data-action="del-prov"]'); if(!btn) return;
+    if(!confirm('¿Eliminar proveedor?')) return;
+    const ok = await DB.remove('impo_proveedores_conceptos', btn.dataset.id);
+    if(ok){ STATE.proveedores = STATE.proveedores.filter(r=>r.id!==btn.dataset.id); paint(); }
+  });
+};
+</script>
+
+<script>
+/* ============================================================
+   VISTA: IMPORTAR FACTURAS PDF
+   Extracción de texto (pdf.js) + heurísticas de proveedor / NIT /
+   N° factura / monto / BL. SIEMPRE se presenta como borrador para
+   revisión manual antes de guardar — no hay garantía de 100% de
+   precisión porque cada proveedor factura en formato distinto.
+   ============================================================ */
+if(window.pdfjsLib){
+  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+}
+
+let facturaSelectedId = null;
+let pendingInvoices = []; // {file, text, guess, id}
+let pendingSeq = 0;
+
+// Reconstruye el orden de lectura VISUAL (fila por fila, de arriba hacia abajo y de izquierda
+// a derecha) usando la posición (x,y) de cada fragmento de texto — en vez del orden en que el
+// PDF los dibujó internamente. Muchas facturas colombianas arman sus tablas dibujando primero
+// toda una columna de etiquetas y luego, mucho más adelante en el archivo, la columna de
+// valores; extraídos en ese orden crudo, una etiqueta como "SUBTOTAL" podía terminar a cientos
+// de caracteres de su monto real. Agrupando por fila según la coordenada Y (con un margen de
+// tolerancia) y ordenando cada fila por X, "SUBTOTAL" y su valor vuelven a quedar en la misma
+// línea, tal como se ven en el PDF.
+function reconstructReadingOrder(items){
+  const rows = [];
+  for(const it of items){
+    if(!it.str || !it.str.trim()) continue;
+    const y = it.transform[5];
+    const x = it.transform[4];
+    let row = rows.find(r => Math.abs(r.y - y) < (it.height||8)*0.6);
+    if(!row){ row = {y, items:[]}; rows.push(row); }
+    row.items.push({x, str: it.str});
+  }
+  rows.sort((a,b)=> b.y - a.y); // Y del PDF crece hacia arriba: orden descendente = arriba→abajo
+  // Además del texto de cada fila (para las búsquedas "etiqueta ... valor en la misma línea"
+  // que ya existían), se guarda un charMap: para cada posición de caracter del texto de la
+  // fila, la X del fragmento original de donde vino. Esto permite luego, en tablas donde la
+  // fila de etiquetas y la fila de valores están físicamente separadas (columnas), ubicar en
+  // qué X cayó una etiqueta y buscar el valor de la fila de abajo que quede en esa misma
+  // columna — ver extractFromColumnTable.
+  rows.forEach(r => {
+    r.items.sort((a,b)=>a.x-b.x);
+    let text = '';
+    const charMap = [];
+    r.items.forEach((it, idx) => {
+      if(idx>0){ text += ' '; charMap.push(null); }
+      for(let k=0;k<it.str.length;k++) charMap.push(it.x);
+      text += it.str;
+    });
+    r.text = text;
+    r.charMap = charMap;
+  });
+  return rows;
+}
+
+async function extractPdfText(file){
+  const buf = await file.arrayBuffer();
+  const pdf = await pdfjsLib.getDocument({data: buf}).promise;
+  let text = '';
+  const rows = [];
+  for(let p=1; p<=pdf.numPages; p++){
+    const page = await pdf.getPage(p);
+    const content = await page.getTextContent();
+    const pageRows = reconstructReadingOrder(content.items);
+    rows.push(...pageRows);
+    text += pageRows.map(r=>r.text).join('\n') + '\n';
+  }
+  return {text, rows};
+}
+
+function parseMoneyToken(tok){
+  tok = (tok==null?'':String(tok)).replace(/[^\d.,]/g,'');
+  if(!tok) return null;
+  // El separador decimal es el ÚLTIMO punto o coma del texto, y solo cuenta como decimal si
+  // le siguen 1 o 2 dígitos hasta el final (formato de centavos: "7.445,47", "7,445.47",
+  // "111.04"). Si le siguen 3 dígitos se trata como separador de miles, no decimal — así se
+  // interpretan bien tanto el formato colombiano sin decimales ("736.843" = 736.843 pesos,
+  // "3.878.120" = 3.878.120 pesos) como el formato anglo con centavos ("21,940,471.69").
+  const decMatch = tok.match(/[.,](\d{1,2})$/);
+  let intPart, decPart;
+  if(decMatch){
+    intPart = tok.slice(0, tok.length - decMatch[0].length);
+    decPart = decMatch[1];
+  } else {
+    intPart = tok;
+    decPart = '';
+  }
+  intPart = intPart.replace(/[.,]/g, '');
+  if(!intPart && !decPart) return null;
+  const n = parseFloat((intPart||'0') + (decPart ? '.'+decPart : ''));
+  return isNaN(n) ? null : n;
+}
+
+// Respaldo para tablas donde la fila de ETIQUETAS de columna (p.ej. "SUBTOTAL IVA
+// RETEFUENTE TOTAL A PAGAR") y la fila de VALORES están físicamente separadas — no una
+// junto a la otra en la misma línea, sino en dos filas visuales distintas, alineadas por
+// columna (X). Esto pasa en el resumen de totales de las facturas de TKS (y puede pasar en
+// otras plantillas parecidas), y reconstructReadingOrder por sí solo no lo resuelve porque
+// ahí no hay ninguna línea que combine etiqueta+valor.
+// Busca la etiqueta, y si la encuentra, mira SOLO en la fila inmediatamente siguiente (nunca
+// más abajo, para no terminar agarrando por error un número de cuenta bancaria u otro dato
+// no relacionado) el valor cuya columna (X) esté más cerca de la X de la etiqueta.
+function extractFromColumnTable(rows, labelSource, refNumbers, {skipIfPrecededBy}={}){
+  const labelRe = new RegExp(labelSource, 'i');
+  for(let ri=0; ri<rows.length; ri++){
+    const row = rows[ri];
+    const m = row.text.match(labelRe);
+    if(!m) continue;
+    if(skipIfPrecededBy){
+      const before = row.text.slice(Math.max(0, m.index-12), m.index).toUpperCase();
+      if(before.includes(skipIfPrecededBy)) continue;
+    }
+    let labelX = null;
+    for(let i=m.index; i<m.index+m[0].length; i++){ if(row.charMap[i]!=null){ labelX = row.charMap[i]; break; } }
+    if(labelX == null) continue;
+    const valRow = rows[ri+1];
+    if(!valRow) continue;
+    // Candidatos con "forma de monto": empiezan con "$", o traen separador de miles cada 3
+    // dígitos (p.ej. "11,091,498") — esto excluye columnas de cantidad ("5", "5.00") y
+    // cualquier número sin ese formato (como un número de referencia largo sin separadores).
+    const numRe = /\$?\s?[\d][\d.,]{0,17}=?/g;
+    let nm, candidates = [];
+    while((nm = numRe.exec(valRow.text)) !== null){
+      const raw = nm[0];
+      const looksLikeMoney = /\$/.test(raw) || /^\d{1,3}([.,]\d{3})+([.,]\d{1,2})?=?$/.test(raw.trim());
+      if(!looksLikeMoney) continue;
+      const val = parseMoneyToken(raw);
+      if(val === null || val < 0) continue;
+      if(refNumbers && refNumbers.has(val)) continue;
+      let x = null;
+      for(let i=nm.index; i<nm.index+raw.length; i++){ if(valRow.charMap[i]!=null){ x = valRow.charMap[i]; break; } }
+      if(x == null) continue;
+      candidates.push({val, x});
+    }
+    if(!candidates.length) continue;
+    candidates.sort((a,b)=> Math.abs(a.x-labelX) - Math.abs(b.x-labelX));
+    return candidates[0].val;
+  }
+  return null;
+}
+
+function guessInvoiceFields(text, rows, fileName){
+  const upper = text.toUpperCase();
+  fileName = fileName || '';
+
+  // Proveedor: coincidencia contra la tabla de proveedores conocidos
+  let proveedor = null, provRec = null;
+  for(const p of STATE.proveedores){
+    if(upper.includes(p.proveedor.toUpperCase())){ proveedor = p.proveedor; provRec = p; break; }
+  }
+
+  // NIT — se prioriza el NIT ya conocido del proveedor (más confiable que el regex,
+  // que puede confundir el NIT del comprador/consignatario con el del proveedor)
+  let nitRegex = null;
+  const nitMatch = text.match(/NIT[.:\s]{0,4}([0-9][0-9.\-]{5,17})/i);
+  if(nitMatch) nitRegex = nitMatch[1].trim();
+  let nit = (provRec && provRec.nit) || nitRegex || null;
+
+  // N° Factura — primero en el texto, luego en el nombre del archivo (suele traer pistas: "Factura JAS BOG88606")
+  let nFactura = null;
+  const facturaPatterns = [
+    /FACT[-\s]?([0-9]{3,10})/i,
+    /FACTURA\s*(?:ELECTR[OÓ]NICA)?\s*N[°ºo.:]{0,3}\s*([A-Z]{0,4}-?[0-9]{3,10})/i,
+    /INVOICE\s*(?:NO|N[°ºo.:])?\s*[:.]?\s*([A-Z0-9\-]{4,15})/i,
+  ];
+  for(const re of facturaPatterns){ const m = text.match(re); if(m){ nFactura = m[1]; break; } }
+  if(!nFactura){
+    const fnMatch = fileName.match(/FACTURA[\s_-]*([A-Z]{0,4}\s?[0-9]{3,12})/i) || fileName.match(/FACT[\s_-]*([A-Z]{0,4}[0-9]{3,12})/i);
+    if(fnMatch) nFactura = fnMatch[1].trim();
+  }
+
+  // BL — coincidencia exacta contra los BL conocidos del sistema
+  let bl = null;
+  for(const e of STATE.embarques){
+    if(e.bl && upper.includes(e.bl.toUpperCase())){ bl = e.bl; break; }
+  }
+  if(!bl){
+    const hblMatch = text.match(/H\/?BL[:\s]{0,4}([A-Z0-9]{8,20})/i);
+    if(hblMatch) bl = hblMatch[1];
+  }
+
+  // Rubros de la factura: Subtotal, Descuento, IVA, Total operación, RETEFUENTE, RETEIVA, Total final.
+  // Se busca "<etiqueta> ... <número>" y se descarta cualquier candidato que coincida con algún
+  // número de referencia (N° de factura detectado, o cualquier número visible en el nombre del
+  // archivo: estos suelen traer más de un número de referencia, p.ej. "Factura 21606 Nc804.pdf"
+  // trae tanto 21606 como 804 — ninguno de los dos es un monto).
+  const nFacturaNum = nFactura ? parseMoneyToken(nFactura) : null;
+  const refNumbers = new Set();
+  if(nFacturaNum != null) refNumbers.add(nFacturaNum);
+  (fileName.match(/\d{3,10}/g) || []).forEach(d => refNumbers.add(Number(d)));
+  function extractLabeled(labelSource, {skipIfPrecededBy}={}){
+    // Se busca la etiqueta y luego se revisan TODOS los números que aparecen en lo que resta
+    // de esa misma línea (el texto ya viene reordenado visualmente por reconstructReadingOrder,
+    // así que la línea sí corresponde a una fila real de la factura). Si una fila trae más de
+    // un monto — por ejemplo una factura con columna en USD y columna en Pesos — se usa el
+    // ÚLTIMO válido, que en las facturas colombianas casi siempre es la columna en pesos. Se
+    // descarta cualquier número seguido de "%" (una tasa, no un monto) y cualquier número que
+    // coincida con un número de referencia (factura, etc.) en vez de adivinar otro valor.
+    const labelRe = new RegExp(labelSource, 'gi');
+    let m;
+    while((m = labelRe.exec(text)) !== null){
+      if(skipIfPrecededBy){
+        const before = text.slice(Math.max(0, m.index-12), m.index).toUpperCase();
+        if(before.includes(skipIfPrecededBy)) continue;
+      }
+      const nlIdx = text.indexOf('\n', labelRe.lastIndex);
+      const restOfLine = text.slice(labelRe.lastIndex, nlIdx===-1 ? text.length : nlIdx);
+      // {0,17} (no {2,17}) para no perder valores legítimos de 1-2 dígitos como "DESCUENTO 0"
+      // o "RETEIVA 0" — al buscar solo dentro de la línea de la etiqueta, aceptar números
+      // cortos aquí es seguro.
+      const numRe = /([\d][\d.,]{0,17})\s{0,2}(%)?/g;
+      let nm, lastVal = null;
+      while((nm = numRe.exec(restOfLine)) !== null){
+        if(nm[2]) continue; // es una tasa (%), no un monto
+        const val = parseMoneyToken(nm[1]);
+        if(val === null) continue;
+        if(refNumbers.has(val)) continue; // evita confundir con un número de referencia (factura, etc.)
+        if(val < 0) continue; // un monto negativo no tiene sentido aquí, pero 0 sí es válido (p.ej. "DESCUENTO 0")
+        lastVal = val;
+      }
+      if(lastVal !== null) return lastVal;
+    }
+    return null;
+  }
+
+  // Si la búsqueda "etiqueta ... valor en la misma línea" no encuentra nada, se intenta el
+  // respaldo de tabla por columnas (extractFromColumnTable), para las facturas donde la fila
+  // de etiquetas y la fila de valores están físicamente separadas (ver comentario de esa función).
+  const subtotal = extractLabeled('SUB[\\s.\\-]{0,3}TOTAL') ?? extractFromColumnTable(rows, 'SUB[\\s.\\-]{0,3}TOTAL', refNumbers);
+  const descuento = extractLabeled('DESCUENTOS?') ?? extractFromColumnTable(rows, 'DESCUENTOS?', refNumbers);
+  const iva = extractLabeled('\\bI\\.?\\s*V\\.?\\s*A\\.?\\b', {skipIfPrecededBy:'RETE'}) ?? extractFromColumnTable(rows, '\\bI\\.?\\s*V\\.?\\s*A\\.?\\b', refNumbers, {skipIfPrecededBy:'RETE'});
+  const totalOperacion = extractLabeled('TOTAL\\s*(?:DE\\s*LA\\s*)?OPERACI[OÓ]N') ?? extractFromColumnTable(rows, 'TOTAL\\s*(?:DE\\s*LA\\s*)?OPERACI[OÓ]N', refNumbers);
+  const retefuente = extractLabeled('RETE\\s*\\.?\\s*FUENTE') ?? extractLabeled('RETENCI[OÓ]N\\s*EN\\s*LA\\s*FUENTE')
+    ?? extractFromColumnTable(rows, 'RETE\\s*\\.?\\s*FUENTE', refNumbers) ?? extractFromColumnTable(rows, 'RETENCI[OÓ]N\\s*EN\\s*LA\\s*FUENTE', refNumbers);
+  const reteiva = extractLabeled('RETE\\s*\\.?\\s*I\\.?\\s*V\\.?\\s*A\\.?') ?? extractLabeled('RETENCI[OÓ]N\\s*DE\\s*I\\.?\\s*V\\.?\\s*A\\.?')
+    ?? extractFromColumnTable(rows, 'RETE\\s*\\.?\\s*I\\.?\\s*V\\.?\\s*A\\.?', refNumbers) ?? extractFromColumnTable(rows, 'RETENCI[OÓ]N\\s*DE\\s*I\\.?\\s*V\\.?\\s*A\\.?', refNumbers);
+  const totalFinal = extractLabeled('TOTAL\\s*MENOS\\s*RETENCIONES') ?? extractLabeled('NETO\\s*A\\s*PAGAR')
+    ?? extractLabeled('TOTAL\\s*A\\s*PAGAR') ?? extractLabeled('VALOR\\s*TOTAL') ?? extractLabeled('GRAN\\s*TOTAL')
+    ?? extractLabeled('\\bTOTAL\\b', {skipIfPrecededBy:'SUB'})
+    ?? extractFromColumnTable(rows, 'TOTAL\\s*MENOS\\s*RETENCIONES', refNumbers) ?? extractFromColumnTable(rows, 'NETO\\s*A\\s*PAGAR', refNumbers)
+    ?? extractFromColumnTable(rows, 'TOTAL\\s*A\\s*PAGAR', refNumbers) ?? extractFromColumnTable(rows, 'VALOR\\s*TOTAL', refNumbers) ?? extractFromColumnTable(rows, 'GRAN\\s*TOTAL', refNumbers)
+    ?? extractFromColumnTable(rows, '\\bTOTAL\\b', refNumbers, {skipIfPrecededBy:'SUB'});
+
+  // Moneda
+  const moneda = /USD|US\$|DOLLARS?/i.test(text) && !/COP|PESOS COLOMBIANOS/i.test(text) ? 'USD' : 'COP';
+
+  // Fecha (dd/mm/aaaa o dd-mm-aaaa)
+  let fecha = null;
+  const fechaMatch = text.match(/\b([0-3]?\d)[\/\-]([01]?\d)[\/\-](20\d{2})\b/);
+  if(fechaMatch){
+    const [_, d, mo, y] = fechaMatch;
+    fecha = `${y}-${mo.padStart(2,'0')}-${d.padStart(2,'0')}`;
+  }
+
+  // Si no se detectó subtotal pero sí un total final, se usa el total final como mejor estimación del subtotal
+  // (queda igual de editable; es solo un punto de partida razonable).
+  const subtotalFinal = subtotal ?? (totalOperacion==null && retefuente==null && reteiva==null ? totalFinal : null);
+
+  // Tipo de factura y rubro de Costo_Mercancia: se proponen a partir de la configuración del
+  // proveedor (Proveedores y Conceptos) — el usuario siempre puede corregirlos en la tarjeta.
+  const tipoFactura = provRec ? (provRec.tipo_factura_default || 'servicio') : 'servicio';
+  const rubroCostoMercancia = (provRec && tipoFactura==='servicio') ? (provRec.rubro_costo_mercancia || null) : null;
+
+  // FOB / Flete / Seguro (solo relevantes si es una factura de mercancía): intento best-effort,
+  // reutilizando la misma búsqueda de etiquetas. En la práctica esta combinación rara vez viene
+  // clara y separada en el PDF (a diferencia de Subtotal/IVA en las facturas de servicio), así
+  // que estos tres casi siempre quedarán en blanco y hay que digitarlos a mano — no se debe
+  // confiar en esta extracción para Datos_Mercancia sin revisar contra la factura real.
+  const fobGuess = extractLabeled('\\bFOB\\b') ?? extractFromColumnTable(rows, '\\bFOB\\b', refNumbers);
+  const fleteGuess = extractLabeled('FLETE\\s*INTERNACIONAL') ?? extractLabeled('\\bFREIGHT\\b')
+    ?? extractFromColumnTable(rows, 'FLETE\\s*INTERNACIONAL', refNumbers) ?? extractFromColumnTable(rows, '\\bFREIGHT\\b', refNumbers);
+  const seguroGuess = extractLabeled('\\bSEGURO\\b') ?? extractLabeled('\\bINSURANCE\\b')
+    ?? extractFromColumnTable(rows, '\\bSEGURO\\b', refNumbers) ?? extractFromColumnTable(rows, '\\bINSURANCE\\b', refNumbers);
+
+  return {
+    proveedor, nit, concepto: provRec?provRec.concepto:null,
+    etapa_incoterm: provRec?provRec.etapa_incoterm:null, n_factura: nFactura, bl, moneda, fecha,
+    subtotal: subtotalFinal, descuento, iva, total_operacion: totalOperacion,
+    retefuente, reteiva, total_final: totalFinal,
+    tipo_factura: tipoFactura, rubro_costo_mercancia: rubroCostoMercancia,
+    fob_usd: fobGuess, flete_usd: fleteGuess, seguro_usd: seguroGuess, trm_factura: null,
+    confianza: (proveedor?1:0)+(nFactura?1:0)+(totalFinal||subtotalFinal?1:0)+(bl?1:0),
+  };
+}
+
+function invNumInput(cls, val){
+  return `<input class="field ${cls} mono" type="number" step="0.01" style="width:100%;text-align:right" value="${val ?? ''}">`;
+}
+
+function invoiceCardHtml(inv){
+  const g = inv.guess;
+  const confLabel = ['Muy baja','Baja','Media','Buena','Alta'][g.confianza] || 'Baja';
+  return `<div class="invoice-card" data-pid="${inv.id}">
+    <div class="status-line">
+      <strong>${esc(inv.file.name)}</strong>
+      <span class="confidence">Confianza de extracción: ${confLabel} (${g.confianza}/4 campos clave) · revisa y corrige los montos antes de guardar (moneda detectada: ${esc(g.moneda||'COP')})</span>
+    </div>
+    <div class="row">
+      <div><span class="field-label">Proveedor</span><input class="field pv-proveedor" list="dlProveedores" style="width:100%" value="${esc(g.proveedor||'')}"></div>
+      <div><span class="field-label">NIT</span><input class="field pv-nit mono" style="width:100%" value="${esc(g.nit||'')}"></div>
+      <div><span class="field-label">N° Factura</span><input class="field pv-factura" style="width:100%" value="${esc(g.n_factura||'')}"></div>
+      <div><span class="field-label">Fecha</span><input class="field pv-fecha" type="date" style="width:100%" value="${esc(g.fecha||todayISO())}"></div>
+    </div>
+    <div class="row">
+      <div><span class="field-label">Tipo de factura</span><select class="field pv-tipo-factura" style="width:100%">
+        ${TIPO_FACTURA_OPTS.map(o=>`<option value="${o.value}" ${ (g.tipo_factura||'servicio')===o.value?'selected':''}>${esc(o.label)}</option>`).join('')}
+      </select></div>
+      <div><span class="field-label">BL / Embarque</span><input class="field pv-bl mono" list="dlBLsImport" style="width:100%" value="${esc(g.bl||'')}"></div>
+    </div>
+    <div class="pv-servicio-fields" style="display:${g.tipo_factura==='mercancia'?'none':'block'}">
+      <div class="row">
+        <div><span class="field-label">Concepto</span><input class="field pv-concepto" style="width:100%" value="${esc(g.concepto||'')}"></div>
+        <div><span class="field-label">Etapa Incoterm</span><select class="field pv-etapa" style="width:100%">
+          <option value="">—</option>${ETAPA_INCOTERM_OPTS.map(o=>`<option ${o===g.etapa_incoterm?'selected':''}>${esc(o)}</option>`).join('')}
+        </select></div>
+        <div><span class="field-label">Rubro Costo_Mercancia</span><select class="field pv-rubro" style="width:100%">
+          <option value="">— sin asignar (no se suma automático) —</option>
+          ${RUBRO_COSTO_MERCANCIA_OPTS.map(o=>`<option value="${o.value}" ${o.value===g.rubro_costo_mercancia?'selected':''}>${esc(o.label)}</option>`).join('')}
+        </select></div>
+      </div>
+      <div class="row" style="border-top:1px solid var(--border);padding-top:10px;margin-top:2px">
+        <div><span class="field-label">Subtotal</span>${invNumInput('pv-subtotal', g.subtotal)}</div>
+        <div><span class="field-label">Descuento</span>${invNumInput('pv-descuento', g.descuento)}</div>
+        <div><span class="field-label">IVA</span>${invNumInput('pv-iva', g.iva)}</div>
+        <div><span class="field-label">Total Operación</span>${invNumInput('pv-totalop', g.total_operacion)}</div>
+      </div>
+      <div class="row">
+        <div><span class="field-label">RETEFUENTE</span>${invNumInput('pv-retefuente', g.retefuente)}</div>
+        <div><span class="field-label">RETEIVA</span>${invNumInput('pv-reteiva', g.reteiva)}</div>
+        <div><span class="field-label">Total menos Retenciones</span>${invNumInput('pv-totalfinal', g.total_final)}</div>
+      </div>
+      <p class="helptext" style="margin:0">Si la factura solo trae el total final (sin desglose), déjalo en "Total menos Retenciones" y deja los demás en blanco — Control Financiero seguirá calculando correctamente el Gran Total. Si además le asignas un "Rubro Costo_Mercancia", su valor neto (después de descuento/IVA/retenciones) se sumará solo a ese rubro en Liquidación Incoterm para este BL.</p>
+    </div>
+    <div class="pv-mercancia-fields" style="display:${g.tipo_factura==='mercancia'?'block':'none'}">
+      <div class="row" style="border-top:1px solid var(--border);padding-top:10px;margin-top:2px">
+        <div><span class="field-label">Moneda</span><select class="field pv-moneda" style="width:100%">
+          <option value="USD" ${(g.moneda||'USD')==='USD'?'selected':''}>USD</option>
+          <option value="COP" ${g.moneda==='COP'?'selected':''}>COP</option>
+        </select></div>
+        <div><span class="field-label">FOB</span>${invNumInput('pv-fob', g.fob_usd)}</div>
+        <div><span class="field-label">Flete internacional</span>${invNumInput('pv-flete', g.flete_usd)}</div>
+        <div><span class="field-label">Seguro</span>${invNumInput('pv-seguro', g.seguro_usd)}</div>
+      </div>
+      <div class="row">
+        <div><span class="field-label">TRM de esta factura (opcional)</span>${invNumInput('pv-trm', g.trm_factura)}</div>
+      </div>
+      <p class="helptext" style="margin:0">FOB/Flete/Seguro casi nunca se detectan solos en el PDF — revísalos siempre contra la factura real antes de guardar. Se sumarán automáticamente a Datos_Mercancia para este BL (Liquidación Incoterm); si el BL todavía no tiene TRM propia cargada, se usará la TRM que indiques aquí.</p>
+    </div>
+    <div class="toolbar" style="justify-content:flex-end">
+      <button class="btn" data-action="descartar-pdf" data-pid="${inv.id}">Descartar</button>
+      <button class="btn primary" data-action="guardar-pdf" data-pid="${inv.id}">Guardar en BD Importaciones</button>
+    </div>
+  </div>`;
+}
+
+function renderPendingInvoices(){
+  const wrap = document.getElementById('pdfPendingWrap');
+  if(!wrap) return;
+  if(!pendingInvoices.length){ wrap.innerHTML = ''; return; }
+  wrap.innerHTML = `<h3 style="font-size:13px;margin:6px 0">Facturas por confirmar (${pendingInvoices.length})</h3>
+    <div style="display:flex;flex-direction:column;gap:12px">${pendingInvoices.map(invoiceCardHtml).join('')}</div>`;
+}
+
+async function handlePdfFiles(fileList){
+  const files = Array.from(fileList).filter(f=>f.type==='application/pdf' || /\.pdf$/i.test(f.name));
+  if(!files.length){ toast('No se encontraron archivos PDF','err'); return; }
+  toast(`Procesando ${files.length} PDF(s)…`);
+  for(const file of files){
+    try{
+      const {text, rows} = await extractPdfText(file);
+      const guess = guessInvoiceFields(text, rows, file.name);
+      pendingInvoices.push({id:'pi'+(pendingSeq++), file, text, guess});
+    }catch(err){
+      console.error(err);
+      toast('No se pudo leer '+file.name+': '+err.message, 'err');
+    }
+  }
+  renderPendingInvoices();
+}
+
+async function saveInvoiceCard(pid){
+  const card = document.querySelector(`.invoice-card[data-pid="${pid}"]`);
+  const inv = pendingInvoices.find(i=>i.id===pid);
+  if(!card || !inv) return;
+  const val = sel => card.querySelector(sel).value;
+  const proveedor = val('.pv-proveedor');
+  const nit = val('.pv-nit');
+  const n_factura = val('.pv-factura');
+  const fecha = val('.pv-fecha');
+  const bl = val('.pv-bl');
+  const tipo_factura = val('.pv-tipo-factura') || 'servicio';
+  const emb = STATE.embarques.find(e=>e.bl===bl);
+
+  // bdPatch: columnas específicas de impo_bd_importaciones según el tipo de factura.
+  // finalCandidatos: lo que se guarda en impo_facturas.campos_candidatos para la ficha de
+  // detalle — a diferencia de antes, se toman los valores YA EDITADOS en la tarjeta (no el
+  // "guess" original sin revisar), para que la ficha de detalle refleje lo que realmente se
+  // guardó.
+  let bdPatch, monto, concepto = null, etapa_incoterm = null, finalCandidatos;
+
+  if(tipo_factura === 'mercancia'){
+    const moneda = val('.pv-moneda') || 'USD';
+    const fob_usd = Number(val('.pv-fob'))||0;
+    const flete_usd = Number(val('.pv-flete'))||0;
+    const seguro_usd = Number(val('.pv-seguro'))||0;
+    const trm_factura = Number(val('.pv-trm'))||null;
+    // Monto de referencia (impo_facturas.monto_detectado) en la moneda de la factura de
+    // mercancía — normalmente USD, a diferencia de las facturas de servicio que son en COP.
+    monto = fob_usd + flete_usd + seguro_usd;
+    bdPatch = {
+      tipo_factura, rubro_costo_mercancia: null, moneda, fob_usd, flete_usd, seguro_usd, trm_factura,
+      subtotal: 0, descuento: 0, iva: 0, rte_fte: 0, reteiva: 0,
+    };
+    finalCandidatos = {
+      proveedor, nit, n_factura, bl, fecha, moneda, tipo_factura,
+      fob_usd, flete_usd, seguro_usd, trm_factura,
+      confianza: inv.guess.confianza,
+    };
+  } else {
+    concepto = val('.pv-concepto');
+    etapa_incoterm = val('.pv-etapa');
+    const rubro_costo_mercancia = val('.pv-rubro') || null;
+    const subtotal = Number(val('.pv-subtotal'))||0;
+    const descuento = Number(val('.pv-descuento'))||0;
+    const iva = Number(val('.pv-iva'))||0;
+    const total_operacion = Number(val('.pv-totalop'))||0;
+    const rte_fte = Number(val('.pv-retefuente'))||0;
+    const reteiva = Number(val('.pv-reteiva'))||0;
+    const totalFinalCard = Number(val('.pv-totalfinal'))||0;
+    // Monto de referencia para impo_facturas: preferimos el total ya neto de
+    // retenciones si la factura lo trae explícito; si no, lo calculamos con
+    // la misma fórmula que usa la BD (subtotal - descuento + iva - retenciones).
+    const totalOperacionCalc = subtotal - descuento + iva;
+    const totalMenosRetCalc = totalOperacionCalc - rte_fte - reteiva;
+    monto = totalFinalCard || totalMenosRetCalc || subtotal;
+    bdPatch = {tipo_factura, rubro_costo_mercancia, moneda:'COP', subtotal, descuento, iva, rte_fte, reteiva};
+    finalCandidatos = {
+      proveedor, nit, n_factura, bl, fecha, concepto, etapa_incoterm, moneda:'COP', tipo_factura, rubro_costo_mercancia,
+      subtotal, descuento, iva, total_operacion, retefuente: rte_fte, reteiva, total_final: totalFinalCard,
+      confianza: inv.guess.confianza,
+    };
+  }
+
+  // 1. Subir el PDF original a Storage
+  let storage_path = null;
+  try{
+    const path = `${Date.now()}_${inv.file.name}`.replace(/[^a-zA-Z0-9._\-]/g,'_');
+    const {error: upErr} = await sb.storage.from(BUCKET).upload(path, inv.file, {contentType:'application/pdf'});
+    if(!upErr) storage_path = path;
+  }catch(err){ console.warn('No se pudo subir el PDF a storage', err); }
+
+  // 2. Registrar en impo_facturas
+  const factura = await DB.insert('impo_facturas', {
+    file_name: inv.file.name, storage_path, bl_detectado: bl, proveedor_detectado: proveedor,
+    nit_detectado: nit, n_factura_detectado: n_factura, monto_detectado: monto, concepto_detectado: concepto,
+    texto_extraido: inv.text.slice(0, 20000), campos_candidatos: finalCandidatos,
+    embarque_id: emb?emb.id:null, estado_revision: 'confirmada',
+  });
+  if(factura) STATE.facturas.push(factura);
+
+  // 3. Crear el rubro en BD Importaciones
+  // Nota: total_operacion, total_menos_retenciones, total_a_pagar y gran_total
+  // son columnas calculadas automáticamente en la base de datos a partir de
+  // subtotal/descuento/iva/rte_fte/reteiva (y arancel/sanciones/costos
+  // logísticos que se ajustan luego en Control Financiero) — no se envían aquí.
+  const bdRow = await DB.insert('impo_bd_importaciones', {
+    fecha, bl, producto: emb?emb.producto:null, punto: emb?emb.tienda:null, nit, proveedor, n_factura,
+    concepto, etapa_incoterm, estado_pago: 'Pendiente', estado_impo: emb?emb.estado_impo:null,
+    embarque_id: emb?emb.id:null, factura_id: factura?factura.id:null,
+    ...bdPatch,
+  });
+  if(bdRow) STATE.bdImportaciones.unshift(bdRow);
+
+  if(factura && bdRow){
+    await DB.update('impo_facturas', factura.id, {bd_importacion_id: bdRow.id});
+  }
+
+  // 4. Cruce automático hacia Liquidación Incoterm: si esta factura trae BL, Tipo de factura
+  // y (para servicio) Rubro Costo_Mercancia, se suma sola a Datos_Mercancia/Costo_Mercancia.
+  if(bl) await recomputeLiquidacionFromControlFinanciero(bl);
+
+  pendingInvoices = pendingInvoices.filter(i=>i.id!==pid);
+  renderPendingInvoices();
+  renderConfirmedInvoices();
+  toast('Factura guardada en BD Importaciones','ok');
+}
+
+function renderConfirmedInvoices(){
+  const wrap = document.getElementById('pdfConfirmedWrap');
+  if(!wrap) return;
+  const rows = STATE.facturas.slice().reverse();
+  wrap.innerHTML = `<div class="table-scroll"><table class="grid">
+    <thead><tr><th>Archivo</th><th>Proveedor</th><th>NIT</th><th>N° Factura</th><th>BL</th><th>Tipo</th>
+      <th style="text-align:right">Subtotal</th><th style="text-align:right">IVA</th><th style="text-align:right">Retenciones</th>
+      <th style="text-align:right">Monto</th><th>Estado</th><th></th></tr></thead>
+    <tbody>${rows.map(f=>{
+      const g = f.campos_candidatos || {};
+      const esMercancia = g.tipo_factura === 'mercancia';
+      const retenciones = Number(g.retefuente||0) + Number(g.reteiva||0);
+      const tipoLabel = esMercancia ? 'Mercancía' : 'Servicio';
+      const tipoTitle = (!esMercancia && g.rubro_costo_mercancia) ? RUBRO_COSTO_MERCANCIA_LABEL[g.rubro_costo_mercancia] || '' : '';
+      return `<tr class="${facturaSelectedId===f.id?'row-selected':''}">
+      <td>${esc(f.file_name)}</td><td>${esc(f.proveedor_detectado||'—')}</td><td class="mono">${esc(f.nit_detectado||'—')}</td>
+      <td>${esc(f.n_factura_detectado||'—')}</td>
+      <td class="mono">${esc(f.bl_detectado||'—')}</td>
+      <td><span class="badge ${esMercancia?'info':'neutral'}" title="${esc(tipoTitle)}">${tipoLabel}</span></td>
+      <td class="mono" style="text-align:right">${esMercancia ? (g.fob_usd!=null?'US$ '+money(g.fob_usd,2):'—') : (g.subtotal!=null?moneyCOP(g.subtotal):'—')}</td>
+      <td class="mono" style="text-align:right">${esMercancia ? (g.flete_usd!=null?'US$ '+money(g.flete_usd,2):'—') : (g.iva!=null?moneyCOP(g.iva):'—')}</td>
+      <td class="mono" style="text-align:right">${esMercancia ? (g.seguro_usd!=null?'US$ '+money(g.seguro_usd,2):'—') : (retenciones?moneyCOP(retenciones):'—')}</td>
+      <td class="mono" style="text-align:right;font-weight:600">${moneyCOP(f.monto_detectado)}</td>
+      <td><span class="badge ${f.estado_revision==='confirmada'?'success':'neutral'}">${esc(f.estado_revision)}</span></td>
+      <td><button class="btn small" data-action="ver-factura" data-fid="${f.id}">${facturaSelectedId===f.id?'Ocultar':'Ver detalle'}</button></td>
+    </tr>`}).join('') || `<tr><td colspan="12"><div class="empty">Aún no se ha confirmado ninguna factura.</div></td></tr>`}</tbody>
+  </table></div>`;
+}
+
+function renderFacturaDetail(id){
+  const f = STATE.facturas.find(r=>r.id===id);
+  if(!f) return '';
+  const g = f.campos_candidatos || {};
+  const esMercancia = g.tipo_factura === 'mercancia';
+  const emb = STATE.embarques.find(e=>e.bl===f.bl_detectado);
+  const confLabel = ['Muy baja','Baja','Media','Buena','Alta'][g.confianza];
+  const row = (label, val) => `<div style="display:flex;justify-content:space-between;gap:12px;padding:3px 0;font-size:13px"><span style="color:var(--text-muted)">${esc(label)}</span><span>${val==null||val===''?'—':val}</span></div>`;
+  const moneyRow = (label, val) => row(label, val==null?null:moneyCOP(val));
+  const usdRow = (label, val) => row(label, val==null?null:('US$ '+money(val,2)));
+  return `
+    <div class="panel">
+      <div class="panel-head">
+        <div><h2 style="font-size:15px">${esc(f.file_name)}</h2><div class="desc">Registrada el ${fmtDate((f.created_at||'').slice(0,10))}${confLabel?` · Confianza de extracción al momento de importarla: ${confLabel} (${g.confianza}/4 campos clave)`:''}</div></div>
+        <div style="display:flex;align-items:center;gap:10px">
+          ${f.storage_path?`<button class="btn small" id="facturaVerPdf">Ver PDF original</button>`:''}
+          <button class="btn small" id="facturaClose">Cerrar</button>
+        </div>
+      </div>
+      <div class="panel-body">
+        <div class="grid2" style="align-items:start;gap:20px">
+          <div>
+            <h3 style="font-size:13px;margin-bottom:8px">Identificación</h3>
+            <div style="display:flex;flex-direction:column;gap:2px">
+              ${row('Proveedor', esc(f.proveedor_detectado||''))}
+              ${row('NIT', esc(f.nit_detectado||''))}
+              ${row('N° Factura', esc(f.n_factura_detectado||''))}
+              ${row('Fecha', g.fecha?fmtDate(g.fecha):null)}
+              ${esMercancia ? '' : row('Concepto', esc(f.concepto_detectado||''))}
+              ${esMercancia ? '' : row('Etapa Incoterm', esc(g.etapa_incoterm||''))}
+              ${row('BL / Embarque', `<span class="mono">${esc(f.bl_detectado||'')}</span>${emb?' · '+esc(emb.producto||'')+(emb.tienda?' · '+esc(emb.tienda):''):''}`)}
+              ${row('Tipo de factura', `<span class="badge ${esMercancia?'info':'neutral'}">${esMercancia?'Mercancía':'Servicio / costo de importación'}</span>`)}
+              ${(!esMercancia && g.rubro_costo_mercancia) ? row('Rubro Costo_Mercancia', esc(RUBRO_COSTO_MERCANCIA_LABEL[g.rubro_costo_mercancia]||g.rubro_costo_mercancia)) : ''}
+              ${row('Moneda detectada', esc(g.moneda||'COP'))}
+              ${row('Estado de la revisión', `<span class="badge ${f.estado_revision==='confirmada'?'success':'neutral'}">${esc(f.estado_revision)}</span>`)}
+            </div>
+          </div>
+          <div>
+            <h3 style="font-size:13px;margin-bottom:8px">${esMercancia?'Datos de mercancía (FOB / Flete / Seguro)':'Rubros extraídos de la factura'}</h3>
+            <div style="display:flex;flex-direction:column;gap:2px">
+              ${esMercancia ? `
+                ${usdRow('FOB', g.fob_usd)}
+                ${usdRow('Flete internacional', g.flete_usd)}
+                ${usdRow('Seguro', g.seguro_usd)}
+                ${g.trm_factura!=null ? row('TRM de esta factura', money(g.trm_factura,2)) : ''}
+                <p class="helptext" style="margin-top:4px">Estos valores se suman junto con los de otras facturas de tipo "Mercancía" del mismo BL para calcular Datos_Mercancia en Liquidación Incoterm.</p>
+              ` : `
+                ${moneyRow('Subtotal', g.subtotal)}
+                ${moneyRow('Descuento', g.descuento)}
+                ${moneyRow('IVA', g.iva)}
+                ${moneyRow('Total operación', g.total_operacion)}
+                ${moneyRow('RETEFUENTE', g.retefuente)}
+                ${moneyRow('RETEIVA', g.reteiva)}
+                ${moneyRow('Total menos retenciones', g.total_final)}
+              `}
+              <div style="border-top:1px solid var(--border);margin-top:6px;padding-top:6px">
+                ${moneyRow('Monto registrado en BD Importaciones', f.monto_detectado)}
+              </div>
+            </div>
+          </div>
+        </div>
+        <p class="helptext" style="margin-top:14px">Estos son los valores que quedaron guardados en el momento de confirmar la factura (los mismos que se enviaron a BD Importaciones); si luego editaste el rubro directamente en BD Importaciones o Control Financiero, esta ficha no se actualiza retroactivamente — revisa esa vista para el dato vigente.</p>
+        <details style="margin-top:10px">
+          <summary style="cursor:pointer;font-size:12px;color:var(--text-muted)">Ver texto crudo extraído del PDF (para verificar manualmente)</summary>
+          <pre style="white-space:pre-wrap;font-size:11px;max-height:260px;overflow:auto;background:var(--bg);border:1px solid var(--border);padding:10px;border-radius:6px;margin-top:8px">${esc((f.texto_extraido||'').slice(0,4000))}</pre>
+        </details>
+      </div>
+    </div>
+  `;
+}
+
+VIEWS.facturas = function(){
+  const el = document.getElementById('view-facturas');
+  el.innerHTML = `
+    <div class="panel">
+      <div class="panel-head">
+        <div><h2>Importar Facturas (PDF)</h2><div class="desc">Sube las facturas de tus proveedores (naviera, agente, aduanas, transporte, etc.). El sistema extrae el texto y propone proveedor, NIT, N° de factura, BL y monto — <strong>siempre revisa y corrige antes de guardar</strong>, ya que cada proveedor factura en un formato distinto y la extracción es de apoyo, no garantizada.</div></div>
+      </div>
+      <div class="panel-body">
+        <div class="drop-zone" id="pdfDrop">
+          <strong>Arrastra tus PDFs aquí</strong> o haz clic para seleccionarlos<br>
+          <input type="file" id="pdfInput" accept="application/pdf" multiple style="display:none">
+        </div>
+        <div id="pdfPendingWrap" style="margin-top:16px"></div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-head"><div><h2>Facturas confirmadas</h2><div class="desc">Historial de PDFs procesados y guardados en Control Financiero, con todos los rubros que se extrajeron de cada factura. Haz clic en "Ver detalle" para ver la ficha completa de una factura.</div></div></div>
+      <div class="panel-body flush" id="pdfConfirmedWrap"></div>
+    </div>
+    <div id="facturaDetailWrap"></div>
+    <datalist id="dlBLsImport">${STATE.embarques.map(e=>`<option value="${esc(e.bl)}">`).join('')}</datalist>
+    ${proveedorDatalist()}
+  `;
+
+  const drop = document.getElementById('pdfDrop');
+  const input = document.getElementById('pdfInput');
+  drop.addEventListener('click', ()=>input.click());
+  input.addEventListener('change', ()=>handlePdfFiles(input.files));
+  ['dragenter','dragover'].forEach(evt=>drop.addEventListener(evt, e=>{ e.preventDefault(); drop.classList.add('drag'); }));
+  ['dragleave','drop'].forEach(evt=>drop.addEventListener(evt, e=>{ e.preventDefault(); drop.classList.remove('drag'); }));
+  drop.addEventListener('drop', e=>handlePdfFiles(e.dataTransfer.files));
+
+  document.getElementById('pdfPendingWrap').addEventListener('click', (e)=>{
+    const saveBtn = e.target.closest('[data-action="guardar-pdf"]');
+    const delBtn = e.target.closest('[data-action="descartar-pdf"]');
+    if(saveBtn) saveInvoiceCard(saveBtn.dataset.pid);
+    if(delBtn){ pendingInvoices = pendingInvoices.filter(i=>i.id!==delBtn.dataset.pid); renderPendingInvoices(); }
+  });
+
+  document.getElementById('pdfPendingWrap').addEventListener('change', (e)=>{
+    const sel = e.target.closest('.pv-tipo-factura');
+    if(!sel) return;
+    const card = sel.closest('.invoice-card');
+    if(!card) return;
+    const isMercancia = sel.value === 'mercancia';
+    const servicioFields = card.querySelector('.pv-servicio-fields');
+    const mercanciaFields = card.querySelector('.pv-mercancia-fields');
+    if(servicioFields) servicioFields.style.display = isMercancia ? 'none' : 'block';
+    if(mercanciaFields) mercanciaFields.style.display = isMercancia ? 'block' : 'none';
+  });
+
+  function paintFacturaDetail({scrollToDetail}={}){
+    const dw = document.getElementById('facturaDetailWrap');
+    if(!dw) return;
+    dw.innerHTML = facturaSelectedId ? renderFacturaDetail(facturaSelectedId) : '';
+    const closeBtn = document.getElementById('facturaClose');
+    if(closeBtn) closeBtn.addEventListener('click', ()=>{ facturaSelectedId = null; paintFacturaDetail(); renderConfirmedInvoices(); });
+    const pdfBtn = document.getElementById('facturaVerPdf');
+    if(pdfBtn) pdfBtn.addEventListener('click', async ()=>{
+      const f = STATE.facturas.find(r=>r.id===facturaSelectedId);
+      if(!f || !f.storage_path) return;
+      pdfBtn.disabled = true;
+      try{
+        const {data, error} = await sb.storage.from(BUCKET).createSignedUrl(f.storage_path, 60);
+        if(error || !data) throw error || new Error('sin URL');
+        window.open(data.signedUrl, '_blank');
+      }catch(err){
+        console.error(err);
+        toast('No se pudo abrir el PDF original (¿sigue existiendo en Storage?)', 'err');
+      } finally {
+        pdfBtn.disabled = false;
+      }
+    });
+    if(scrollToDetail){ dw.scrollIntoView({behavior:'smooth', block:'start'}); }
+  }
+
+  document.getElementById('pdfConfirmedWrap').addEventListener('click', (e)=>{
+    const verBtn = e.target.closest('[data-action="ver-factura"]');
+    if(!verBtn) return;
+    const fid = verBtn.dataset.fid;
+    facturaSelectedId = (facturaSelectedId===fid) ? null : fid;
+    renderConfirmedInvoices();
+    paintFacturaDetail({scrollToDetail: !!facturaSelectedId});
+  });
+
+  renderPendingInvoices();
+  renderConfirmedInvoices();
+  paintFacturaDetail();
+};
+
+/* ============================================================
+   CONFIGURACIÓN · USUARIOS (solo admin) — a pedido de Juan Camilo:
+   crear/gestionar quién entra a la app y con qué rol, sin exponer nunca
+   la service_role key aquí (todas las operaciones pasan por la Edge
+   Function impo-gestion-usuarios, que valida en el servidor que quien
+   llama ya es admin antes de crear, cambiar de rol o quitar acceso).
+   ============================================================ */
+VIEWS.usuarios = function(){
+  const el = document.getElementById('view-usuarios');
+  if(!isAdminUser()){
+    el.innerHTML = `<div class="empty">Esta sección es solo para administradores.</div>`;
+    return;
+  }
+  el.innerHTML = `
+    <div class="panel">
+      <div class="panel-head">
+        <div><h2>Configuración · Usuarios</h2><div class="desc">Administra quién puede entrar a Bitácora de Importaciones y con qué rol. "Administrador" puede ver y editar todo, además de gestionar usuarios; "Solo lectura" puede ver todo pero no puede crear, editar ni eliminar nada.</div></div>
+      </div>
+      <div class="panel-body" id="usuariosListWrap"><div class="empty">Cargando…</div></div>
+    </div>
+    <div class="panel">
+      <div class="panel-head">
+        <div><h2>Agregar usuario</h2><div class="desc">Si el correo ya tiene una cuenta en otra app de Multigrupo que comparte este mismo proyecto de Supabase, se le da acceso aquí con su contraseña actual (el campo contraseña se ignora en ese caso, ya que no se le cambia). Si es un correo nuevo, la contraseña que pongas aquí es la que esa persona va a usar para entrar.</div></div>
+      </div>
+      <div class="panel-body">
+        <form id="usuarioCreateForm">
+          <div class="row" style="display:grid;grid-template-columns:2fr 2fr 1fr;gap:10px">
+            <div><label class="field-label">Correo</label><input class="field" type="email" id="nuevoUsuarioEmail" required style="width:100%"></div>
+            <div><label class="field-label">Contraseña (solo correo nuevo)</label><input class="field" type="password" id="nuevoUsuarioPassword" minlength="8" placeholder="mín. 8 caracteres" style="width:100%"></div>
+            <div><label class="field-label">Rol</label><select class="field" id="nuevoUsuarioRol" style="width:100%"><option value="lectura">Solo lectura</option><option value="admin">Administrador</option></select></div>
+          </div>
+          <button class="btn primary" type="submit" style="margin-top:12px">Crear / dar acceso</button>
+        </form>
+        <p class="helptext" id="usuarioCreateMsg"></p>
+      </div>
+    </div>
+  `;
+
+  async function paintList(){
+    const wrap = document.getElementById('usuariosListWrap');
+    try{
+      const {usuarios} = await callGestionUsuarios({action:'list'});
+      if(!usuarios || !usuarios.length){ wrap.innerHTML = `<div class="empty">No hay usuarios todavía.</div>`; return; }
+      wrap.innerHTML = `<div class="table-scroll"><table class="grid">
+        <thead><tr><th>Correo</th><th>Rol</th><th>Desde</th><th></th></tr></thead>
+        <tbody>${usuarios.map(u=>{
+          const esSelf = u.id === CURRENT_USER.id;
+          return `<tr>
+            <td>${esc(u.email)}${esSelf?' <span class="helptext" style="display:inline">(tú)</span>':''}</td>
+            <td><select class="field" data-user-role="${u.id}" ${esSelf?'disabled title="No puedes cambiar tu propio rol desde aquí"':''}>
+              <option value="lectura" ${u.rol==='lectura'?'selected':''}>Solo lectura</option>
+              <option value="admin" ${u.rol==='admin'?'selected':''}>Administrador</option>
+            </select></td>
+            <td>${esc((u.created_at||'').slice(0,10))}</td>
+            <td><button class="btn small danger" data-del-user="${u.id}" ${esSelf?'disabled title="No puedes quitarte el acceso a ti mismo"':''}>Quitar acceso</button></td>
+          </tr>`;
+        }).join('')}</tbody>
+      </table></div>`;
+      wrap.querySelectorAll('[data-user-role]').forEach(sel=>{
+        sel.addEventListener('change', async ()=>{
+          try{
+            await callGestionUsuarios({action:'set_role', user_id: sel.dataset.userRole, rol: sel.value});
+            toast('Rol actualizado','ok');
+          }catch(err){
+            toast('Error: '+err.message, 'err');
+          }
+          paintList();
+        });
+      });
+      wrap.querySelectorAll('[data-del-user]').forEach(btn=>{
+        btn.addEventListener('click', async ()=>{
+          if(!confirm('¿Quitar el acceso de este usuario a Bitácora de Importaciones? No se borra su cuenta, solo deja de poder entrar aquí.')) return;
+          try{
+            await callGestionUsuarios({action:'delete', user_id: btn.dataset.delUser});
+            toast('Acceso eliminado','ok');
+          }catch(err){
+            toast('Error: '+err.message, 'err');
+          }
+          paintList();
+        });
+      });
+    }catch(err){
+      wrap.innerHTML = `<div class="empty">Error cargando usuarios: ${esc(err.message)}</div>`;
+    }
+  }
+  paintList();
+
+  document.getElementById('usuarioCreateForm').addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    const email = document.getElementById('nuevoUsuarioEmail').value.trim();
+    const password = document.getElementById('nuevoUsuarioPassword').value;
+    const rol = document.getElementById('nuevoUsuarioRol').value;
+    const msg = document.getElementById('usuarioCreateMsg');
+    const btn = e.target.querySelector('button[type="submit"]');
+    msg.style.color = ''; msg.textContent = 'Creando…';
+    btn.disabled = true;
+    try{
+      const res = await callGestionUsuarios({action:'create', email, password, rol});
+      msg.textContent = res.reused_existing_account
+        ? `Listo: se le dio acceso a ${email} con su cuenta existente (su contraseña no cambió).`
+        : `Listo: se creó la cuenta para ${email}.`;
+      toast('Usuario agregado','ok');
+      document.getElementById('usuarioCreateForm').reset();
+      paintList();
+    }catch(err){
+      msg.style.color = 'var(--danger)';
+      msg.textContent = 'Error: ' + err.message;
+    }finally{
+      btn.disabled = false;
+    }
+  });
+};
+</script>
+
+<script>
+/* ============================================================
+   VISTA: LECTURA DI — a pedido de Juan Camilo: leer y tabular
+   Declaraciones de Importación (DIAN/MUISCA), guardar un historial y
+   poder exportarlo a Excel y CSV. Acepta tanto fotos/escaneos (OCR en
+   el navegador con Tesseract.js) como PDF digital con texto
+   seleccionable (reutiliza extractPdfText, igual que Importar
+   Facturas). SIEMPRE se presenta como borrador editable antes de
+   guardar — ni el OCR de una foto ni la extracción de un PDF son
+   perfectos, y este formato de la DIAN trae letra muy pequeña y
+   apretada.
+   ============================================================ */
+let pendingLecturaDi = null; // {file, tipoOrigen, texto, radicacion, subpartida, pagina_actual, pagina_total, n_factura, fecha_factura, bl, items:[{ref,producto,cantidad}], confianza} | null
+let diSelectedId = null;
+
+async function extractImageTextOcr(file, onProgress){
+  if(!window.Tesseract) throw new Error('OCR no disponible (no se pudo cargar Tesseract.js)');
+  const worker = await Tesseract.createWorker('spa', 1, {
+    logger: (m) => { if(onProgress && m && m.status && m.progress!=null) onProgress(m.status, m.progress); }
+  });
+  try{
+    const {data} = await worker.recognize(file);
+    return data.text || '';
+  } finally {
+    try{ await worker.terminate(); }catch(e){}
+  }
+}
+
+// Normaliza una fecha que puede venir como texto en varios formatos ("2026/08/08",
+// "08/08/2026") o como objeto Date de JS (celdas de fecha de un Excel leído con
+// SheetJS y cellDates:true) al formato ISO yyyy-mm-dd que usa el resto de la app.
+// Compartida entre el parser de texto (OCR/PDF) y el parser de Excel.
+function normalizeFechaToken(v){
+  if(v==null || v==='') return null;
+  if(v instanceof Date){
+    if(isNaN(v)) return null;
+    const y = v.getFullYear(), m = String(v.getMonth()+1).padStart(2,'0'), d = String(v.getDate()).padStart(2,'0');
+    return `${y}-${m}-${d}`;
+  }
+  const s = String(v).trim();
+  const iso = s.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})/);
+  if(iso) return `${iso[1]}-${iso[2].padStart(2,'0')}-${iso[3].padStart(2,'0')}`;
+  const dmy = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
+  if(dmy) return `${dmy[3]}-${dmy[2].padStart(2,'0')}-${dmy[1].padStart(2,'0')}`;
+  return null;
+}
+
+// Extrae Radicación, Subpartida, Página, N° Factura, Fecha y la lista de ítems
+// (REF / producto / cantidad) de un texto de Declaración de Importación ya
+// extraído (por OCR de una foto o por lectura de un PDF digital). Es
+// heurístico, apoyado en los patrones vistos en el formulario de la
+// DIAN/MUISCA ("Radicación : NNNN", "Subpartida : NNNN", "Página X de Y",
+// "REF.<código> <descripción> CANT. <número>" repetido muchas veces separado
+// por "///", y "Factura No. <n° > Fecha <fecha>") — SIEMPRE debe revisarse a
+// mano antes de guardar, sobre todo los ítems.
+function parseDeclaracionImportacion(text){
+  const flat = String(text||'').replace(/\s+/g, ' ').trim();
+  function grab(re){ const m = flat.match(re); return m ? m[1].trim() : null; }
+
+  const radicacion = grab(/RADICACI[OÓ]N\s*[:.]?\s*([0-9]{4,15})/i);
+  const subpartida = grab(/SUBPARTIDA\s*[:.]?\s*([0-9]{6,12})/i);
+  const paginaActual = grab(/P[AÁ]GINA\s*([0-9]{1,3})\s*DE\s*[0-9]{1,3}/i);
+  const paginaTotal = grab(/P[AÁ]GINA\s*[0-9]{1,3}\s*DE\s*([0-9]{1,3})/i);
+  const n_factura = grab(/FACTURA\s*N[o°º]?\.?\s*([A-Z0-9\-]{4,20})/i);
+  const fechaRaw = grab(/FECHA\s*([0-9]{4}[\/\-][0-9]{1,2}[\/\-][0-9]{1,2}|[0-9]{1,2}[\/\-][0-9]{1,2}[\/\-][0-9]{4})/i);
+  const fecha_factura = normalizeFechaToken(fechaRaw);
+
+  // Ítems: se busca "REF.<código> <descripción> CANT. <número>" directamente con una expresión
+  // regular global sobre el texto ya "aplanado" (sin saltos de línea) — no hace falta separar
+  // primero por "///" u otros caracteres, porque exec() con la bandera global salta sola
+  // cualquier texto entre un ítem y el siguiente. El ".*?" no-goloso hace que la descripción se
+  // corte justo antes de "CANT", incluso cuando el OCR o el PDF los pegó sin espacio
+  // ("NAVIDEÑOCANT. 600").
+  const items = [];
+  const itemRe = /REF\.?\s*([A-Z0-9]+(?:[.\-][A-Z0-9]+)*)\s*(.*?)\s*CANT\.?\s*[:.]?\s*([0-9]{1,7})\b/gi;
+  let m;
+  while((m = itemRe.exec(flat)) !== null){
+    const producto = m[2].replace(/\/+$/,'').replace(/\s+/g,' ').trim();
+    items.push({ref: m[1].trim(), producto, cantidad: Number(m[3])});
+  }
+
+  // Confianza: 1 punto por cada uno de los 4 campos de encabezado detectados, más 1 si se
+  // detectó al menos un ítem (0 a 5) — igual de heurística que el indicador de Importar Facturas.
+  const confianza = [radicacion, subpartida, n_factura, fecha_factura].filter(Boolean).length + (items.length ? 1 : 0);
+
+  return {radicacion, subpartida, pagina_actual: paginaActual?Number(paginaActual):null, pagina_total: paginaTotal?Number(paginaTotal):null, n_factura, fecha_factura, items, confianza};
+}
+
+// Busca en las filas (array de arrays, tal como las entrega
+// XLSX.utils.sheet_to_json(ws, {header:1}) ) una fila cuya primera celda coincida con
+// labelRe (p.ej. "Radicación", "Subpartida") y devuelve el valor de la primera celda no
+// vacía que le sigue en esa misma fila. Así se lee el bloque de encabezado tipo
+// "etiqueta / valor" que suele preceder a la tabla de ítems en estas transcripciones.
+function findHeaderValue(rows, labelRe){
+  for(const row of rows){
+    if(!row || !row.length) continue;
+    const first = row[0];
+    if(first==null) continue;
+    if(labelRe.test(String(first).trim())){
+      for(let i=1;i<row.length;i++){
+        if(row[i]!=null && String(row[i]).trim()!==''){ return row[i]; }
+      }
+    }
+  }
+  return null;
+}
+
+// Extrae Radicación, Subpartida, N° Factura, Fecha e ítems (REF/producto/cantidad) de una
+// hoja de Excel ya leída como array de arrays (una fila = un array de celdas). A diferencia
+// de la importación masiva de embarques (que asume una fila de encabezado limpia en la
+// primera línea), aquí se tolera un bloque de "etiqueta: valor" antes de la tabla de ítems
+// (como en la transcripción real: Radicación/Subpartida/Factura No./Fecha factura en las
+// primeras filas), seguido de una fila de encabezado de tabla (con columnas del estilo
+// REF/Referencia, PRODUCTO/Descripción, CANT/Cantidad en cualquier orden) y luego las filas
+// de ítems. Se descarta cualquier fila cuyo producto/descripción contenga "TOTAL" (fila de
+// totales al pie de la tabla, no es un ítem real) y cualquier fila sin una cantidad numérica
+// (filas en blanco, notas o la leyenda al final del archivo).
+function parseExcelRows(rows){
+  rows = (rows||[]).filter(r => Array.isArray(r));
+  const radicacion = findHeaderValue(rows, /RADICACI[OÓ]N/i);
+  const subpartida = findHeaderValue(rows, /SUBPARTIDA/i);
+  const n_factura = findHeaderValue(rows, /FACTURA/i);
+  const fecha_factura = normalizeFechaToken(findHeaderValue(rows, /FECHA/i));
+  const paginaRaw = findHeaderValue(rows, /P[AÁ]GINA/i);
+  let pagina_actual = null, pagina_total = null;
+  if(paginaRaw!=null){
+    const m = String(paginaRaw).match(/([0-9]{1,3})\s*(?:DE|\/)\s*([0-9]{1,3})/i);
+    if(m){ pagina_actual = Number(m[1]); pagina_total = Number(m[2]); }
+  }
+
+  // Ubica la fila de encabezado de la tabla de ítems: la primera fila que tenga al menos
+  // una columna reconocible como producto/descripción y otra como cantidad (REF es opcional,
+  // no todas las transcripciones la separan en su propia columna).
+  let headerRowIdx = -1, colRef = -1, colProducto = -1, colCantidad = -1;
+  for(let r=0; r<rows.length; r++){
+    const row = rows[r];
+    if(!row) continue;
+    let ref=-1, prod=-1, cant=-1;
+    row.forEach((cell, idx) => {
+      const s = cell==null ? '' : String(cell).trim();
+      if(!s) return;
+      if(ref<0 && /^(REF\.?|REFERENCIA)$/i.test(s)) ref = idx;
+      if(prod<0 && /^(PRODUCTO|DESCRIPCI[OÓ]N)$/i.test(s)) prod = idx;
+      if(cant<0 && /^(CANT\.?|CANTIDAD)$/i.test(s)) cant = idx;
+    });
+    if(prod>=0 && cant>=0){ headerRowIdx = r; colRef = ref; colProducto = prod; colCantidad = cant; break; }
+  }
+
+  const items = [];
+  if(headerRowIdx>=0){
+    for(let r=headerRowIdx+1; r<rows.length; r++){
+      const row = rows[r];
+      if(!row) continue;
+      const producto = colProducto>=0 && row[colProducto]!=null ? String(row[colProducto]).trim() : '';
+      const cantidadRaw = colCantidad>=0 ? row[colCantidad] : null;
+      const cantidad = (cantidadRaw!=null && cantidadRaw!=='' && !isNaN(Number(cantidadRaw))) ? Number(cantidadRaw) : null;
+      if(cantidad==null) continue; // fila en blanco, nota o texto suelto (p.ej. la leyenda) — no es un ítem
+      if(/TOTAL/i.test(producto)) continue; // fila de totales al pie de la tabla — no es un ítem real
+      let ref = colRef>=0 && row[colRef]!=null ? String(row[colRef]).trim() : '';
+      if(!ref || /no\s*visible/i.test(ref)) ref = null; // p.ej. "(no visible)" cuando el inicio del documento viene cortado
+      items.push({ref, producto, cantidad});
+    }
+  }
+
+  const confianza = [radicacion, subpartida, n_factura, fecha_factura].filter(Boolean).length + (items.length ? 1 : 0);
+  return {radicacion, subpartida, pagina_actual, pagina_total, n_factura, fecha_factura, items, confianza};
+}
+
+async function extractExcelDeclaracion(file){
+  const buf = await file.arrayBuffer();
+  const wb = XLSX.read(buf, {type:'array', cellDates:true});
+  const sheetName = wb.SheetNames.find(n=>/detalle/i.test(n)) || wb.SheetNames[0];
+  const ws = wb.Sheets[sheetName];
+  const rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:null});
+  const parsed = parseExcelRows(rows);
+  parsed.sheetName = sheetName;
+  return parsed;
+}
+
+// Reconstruye un texto legible (para "Ver texto crudo extraído" y para texto_crudo en la BD)
+// a partir de los datos ya extraídos de un Excel — no hay OCR/PDF de por medio, así que no hay
+// un texto "crudo" real, pero conviene guardar algo auditable con el mismo formato REF/CANT.
+function excelParsedToTexto(parsed){
+  const lines = [`(Leído desde un archivo Excel${parsed.sheetName ? `, hoja "${parsed.sheetName}"` : ''})`];
+  if(parsed.radicacion) lines.push(`Radicación: ${parsed.radicacion}`);
+  if(parsed.subpartida) lines.push(`Subpartida: ${parsed.subpartida}`);
+  if(parsed.n_factura) lines.push(`Factura No.: ${parsed.n_factura}`);
+  if(parsed.fecha_factura) lines.push(`Fecha factura: ${parsed.fecha_factura}`);
+  lines.push('', `Ítems (${parsed.items.length}):`);
+  parsed.items.forEach((it,idx)=>{
+    lines.push(`${idx+1}. REF.${it.ref||'(sin ref)'} ${it.producto||''} CANT. ${it.cantidad!=null?it.cantidad:''}`);
+  });
+  return lines.join('\n');
+}
+
+function diOrigenLabel(tipo){
+  return tipo==='pdf' ? 'PDF digital' : tipo==='excel' ? 'Excel' : 'Foto/escaneo (OCR)';
+}
+function diOrigenLabelShort(tipo){
+  return tipo==='pdf' ? 'PDF' : tipo==='excel' ? 'Excel' : 'Foto (OCR)';
+}
+function diOrigenBadgeClass(tipo){
+  return tipo==='pdf' ? 'info' : tipo==='excel' ? 'success' : 'neutral';
+}
+
+async function handleDiFile(file){
+  if(!file) return;
+  const isExcel = /\.(xlsx|xls)$/i.test(file.name) || /spreadsheet|ms-excel/i.test(file.type||'');
+  const isPdf = !isExcel && (file.type === 'application/pdf' || /\.pdf$/i.test(file.name));
+  const isImage = !isExcel && !isPdf && (/^image\//.test(file.type) || /\.(png|jpe?g|webp|bmp|gif|tiff?)$/i.test(file.name));
+  if(!isPdf && !isImage && !isExcel){ toast('Solo se aceptan imágenes (foto/escaneo), archivos PDF o Excel (.xlsx)', 'err'); return; }
+
+  const progressEl = document.getElementById('diProgress');
+  if(progressEl){ progressEl.style.display=''; progressEl.textContent = isExcel ? 'Leyendo el Excel…' : isPdf ? 'Leyendo el PDF…' : 'Aplicando OCR a la imagen (puede tardar unos segundos)…'; }
+
+  try{
+    let parsed, texto;
+    if(isExcel){
+      parsed = await extractExcelDeclaracion(file);
+      texto = excelParsedToTexto(parsed);
+    } else if(isPdf){
+      const {text} = await extractPdfText(file);
+      texto = text;
+      parsed = parseDeclaracionImportacion(texto);
+    } else {
+      texto = await extractImageTextOcr(file, (status, progress) => {
+        if(progressEl) progressEl.textContent = `OCR: ${status} (${Math.round((progress||0)*100)}%)`;
+      });
+      parsed = parseDeclaracionImportacion(texto);
+    }
+    pendingLecturaDi = {
+      file, tipoOrigen: isExcel ? 'excel' : (isPdf ? 'pdf' : 'foto'), texto,
+      radicacion: parsed.radicacion, subpartida: parsed.subpartida,
+      pagina_actual: parsed.pagina_actual, pagina_total: parsed.pagina_total,
+      n_factura: parsed.n_factura, fecha_factura: parsed.fecha_factura,
+      items: parsed.items, confianza: parsed.confianza, bl: '',
+    };
+    renderPendingLecturaDi();
+    toast(isExcel ? 'Excel leído — revisa antes de guardar' : isPdf ? 'PDF leído — revisa antes de guardar' : 'OCR completado — revisa y corrige antes de guardar', 'ok');
+  }catch(err){
+    console.error(err);
+    toast('No se pudo leer el documento: '+err.message, 'err');
+  } finally {
+    if(progressEl) progressEl.style.display='none';
+  }
+}
+
+function confLabelDi(n){ return ['Muy baja','Baja','Media','Buena','Alta','Muy alta'][n] ?? 'Muy alta'; }
+
+function diItemRowHtml(it, idx){
+  return `<tr data-idx="${idx}">
+    <td class="mono">${idx+1}</td>
+    <td><input class="cell di-item-ref" value="${esc(it.ref||'')}"></td>
+    <td><input class="cell di-item-producto" value="${esc(it.producto||'')}" style="width:100%"></td>
+    <td><input class="cell di-item-cantidad" type="number" step="1" value="${it.cantidad!=null?it.cantidad:''}" style="text-align:right;width:100%"></td>
+    <td><button class="btn small danger" data-action="del-di-item" data-idx="${idx}" title="Quitar este ítem">✕</button></td>
+  </tr>`;
+}
+
+function renderPendingLecturaDi(){
+  const wrap = document.getElementById('diPendingWrap');
+  if(!wrap) return;
+  if(!pendingLecturaDi){ wrap.innerHTML=''; return; }
+  const p = pendingLecturaDi;
+  wrap.innerHTML = `
+    <div class="invoice-card">
+      <div class="status-line">
+        <strong>${esc(p.file.name)}</strong>
+        <span class="confidence">Confianza de la lectura: ${confLabelDi(p.confianza)} (${p.confianza}/5) · Origen: ${diOrigenLabel(p.tipoOrigen)}</span>
+      </div>
+      <p class="helptext" style="margin:0"><strong>Revisa y corrige todos los campos antes de guardar</strong> — ${p.tipoOrigen==='foto' ? 'la lectura por OCR de una foto no es exacta, sobre todo con letra pequeña o apretada como la de este formato.' : p.tipoOrigen==='excel' ? 'se leyó directamente de las celdas del Excel — normalmente es el método más confiable, pero igual conviene confirmar que las columnas se hayan interpretado bien.' : 'la extracción es de apoyo, no garantizada.'}</p>
+      <div class="row">
+        <div><span class="field-label">Radicación</span><input class="field di-radicacion" value="${esc(p.radicacion||'')}"></div>
+        <div><span class="field-label">Subpartida</span><input class="field di-subpartida" value="${esc(p.subpartida||'')}"></div>
+        <div><span class="field-label">N° Factura</span><input class="field di-nfactura" value="${esc(p.n_factura||'')}"></div>
+        <div><span class="field-label">Fecha factura</span><input class="field di-fecha" type="date" value="${esc(p.fecha_factura||'')}"></div>
+      </div>
+      <div class="row">
+        <div><span class="field-label">Página actual</span><input class="field di-pagina-actual" type="number" value="${p.pagina_actual||''}"></div>
+        <div><span class="field-label">Página total</span><input class="field di-pagina-total" type="number" value="${p.pagina_total||''}"></div>
+        <div style="grid-column:span 2"><span class="field-label">BL / Embarque (opcional)</span><input class="field di-bl" list="dlBLsDi" value="${esc(p.bl||'')}" placeholder="Déjalo en blanco si no aplica a un BL específico"></div>
+      </div>
+      <h3 style="font-size:13px;margin:4px 0 0">Ítems detectados (${p.items.length})</h3>
+      <div class="table-scroll">
+        <table class="grid" id="diItemsTable">
+          <thead><tr><th style="width:40px">#</th><th>REF</th><th>Producto</th><th style="text-align:right;width:110px">Cantidad</th><th style="width:40px"></th></tr></thead>
+          <tbody>${p.items.map((it,idx)=>diItemRowHtml(it,idx)).join('') || `<tr><td colspan="5"><div class="empty">No se detectó ningún ítem — agrégalos manualmente si hace falta.</div></td></tr>`}</tbody>
+        </table>
+      </div>
+      <div class="toolbar" style="justify-content:space-between">
+        <button class="btn small" id="diAddItemRow">+ Agregar ítem</button>
+        <div style="display:flex;gap:8px">
+          <button class="btn" data-action="descartar-di">Descartar</button>
+          <button class="btn primary" data-action="guardar-di">Guardar en Lectura DI</button>
+        </div>
+      </div>
+      <details>
+        <summary style="cursor:pointer;font-size:12px;color:var(--text-muted)">Ver texto crudo extraído (para verificar manualmente)</summary>
+        <pre style="white-space:pre-wrap;font-size:11px;max-height:220px;overflow:auto;background:var(--bg);border:1px solid var(--border);padding:10px;border-radius:6px;margin-top:8px">${esc((p.texto||'').slice(0,6000))}</pre>
+      </details>
+    </div>
+  `;
+}
+
+function syncPendingItemsFromDom(){
+  if(!pendingLecturaDi) return;
+  const rows = document.querySelectorAll('#diItemsTable tbody tr[data-idx]');
+  const items = [];
+  rows.forEach(tr=>{
+    const refEl = tr.querySelector('.di-item-ref');
+    const prodEl = tr.querySelector('.di-item-producto');
+    const cantEl = tr.querySelector('.di-item-cantidad');
+    if(!refEl || !prodEl || !cantEl) return;
+    const cantidadRaw = cantEl.value;
+    items.push({ref: refEl.value.trim(), producto: prodEl.value.trim(), cantidad: cantidadRaw===''?null:Number(cantidadRaw)});
+  });
+  pendingLecturaDi.items = items;
+}
+
+async function saveLecturaDi(){
+  if(!pendingLecturaDi) return;
+  syncPendingItemsFromDom();
+  const card = document.querySelector('#diPendingWrap .invoice-card');
+  if(!card) return;
+  const val = sel => card.querySelector(sel).value.trim();
+  const radicacion = val('.di-radicacion') || null;
+  const subpartida = val('.di-subpartida') || null;
+  const n_factura = val('.di-nfactura') || null;
+  const fecha_factura = val('.di-fecha') || null;
+  const bl = val('.di-bl') || null;
+  const pagina_actual = val('.di-pagina-actual') ? Number(val('.di-pagina-actual')) : null;
+  const pagina_total = val('.di-pagina-total') ? Number(val('.di-pagina-total')) : null;
+
+  const saveBtn = card.querySelector('[data-action="guardar-di"]');
+  if(saveBtn) saveBtn.disabled = true;
+
+  // 1. Subir el archivo original (foto o PDF) a Storage, para poder verificar la lectura contra
+  // el documento real más adelante — igual que se hace con las facturas PDF.
+  let storage_path = null;
+  try{
+    const path = `${Date.now()}_${pendingLecturaDi.file.name}`.replace(/[^a-zA-Z0-9._\-]/g,'_');
+    const {error: upErr} = await sb.storage.from(BUCKET_DI).upload(path, pendingLecturaDi.file, {contentType: pendingLecturaDi.file.type || 'application/octet-stream'});
+    if(!upErr) storage_path = path;
+  }catch(err){ console.warn('No se pudo subir el archivo original a Storage', err); }
+
+  // 2. Encabezado en impo_lecturas_di
+  const header = await DB.insert('impo_lecturas_di', {
+    bl, radicacion, subpartida, n_factura, fecha_factura, pagina_actual, pagina_total,
+    tipo_origen: pendingLecturaDi.tipoOrigen, archivo_nombre: pendingLecturaDi.file.name,
+    storage_path, texto_crudo: (pendingLecturaDi.texto||'').slice(0,20000),
+    confianza: pendingLecturaDi.confianza, created_by: CURRENT_USER ? CURRENT_USER.id : null,
+  });
+  if(!header){ if(saveBtn) saveBtn.disabled = false; return; }
+
+  // 3. Ítems en impo_lecturas_di_items (inserción múltiple)
+  const itemsToInsert = pendingLecturaDi.items
+    .filter(it => it.ref || it.producto || it.cantidad!=null)
+    .map((it, idx) => ({lectura_id: header.id, orden: idx, ref: it.ref||null, producto: it.producto||null, cantidad: it.cantidad}));
+  let savedItems = [];
+  if(itemsToInsert.length){
+    const {data, error} = await sb.from('impo_lecturas_di_items').insert(itemsToInsert).select();
+    if(error){ toast('La lectura se guardó, pero hubo un error guardando los ítems: '+error.message, 'err'); console.error(error); }
+    else savedItems = data || [];
+  }
+
+  STATE.lecturasDi.push(header);
+  STATE.lecturasDiItems.push(...savedItems);
+  pendingLecturaDi = null;
+  renderPendingLecturaDi();
+  renderLecturaDiHistory();
+  toast('Lectura DI guardada','ok');
+}
+
+function diItemsFor(lecturaId){
+  return STATE.lecturasDiItems.filter(it=>it.lectura_id===lecturaId).slice().sort((a,b)=>(a.orden||0)-(b.orden||0));
+}
+
+function renderLecturaDiHistory(){
+  const wrap = document.getElementById('diHistoryWrap');
+  if(!wrap) return;
+  const rows = STATE.lecturasDi.slice().reverse(); // más reciente primero
+  wrap.innerHTML = `<div class="table-scroll"><table class="grid">
+    <thead><tr><th>Radicación</th><th>Subpartida</th><th>N° Factura</th><th>Fecha</th><th>BL</th><th style="text-align:right">Ítems</th><th>Origen</th><th>Cargado</th><th></th></tr></thead>
+    <tbody>${rows.map(r=>{
+      const nItems = diItemsFor(r.id).length;
+      return `<tr class="${diSelectedId===r.id?'row-selected':''}">
+        <td class="mono">${esc(r.radicacion||'—')}</td>
+        <td class="mono">${esc(r.subpartida||'—')}</td>
+        <td>${esc(r.n_factura||'—')}</td>
+        <td>${r.fecha_factura?fmtDate(r.fecha_factura):'—'}</td>
+        <td class="mono">${esc(r.bl||'—')}</td>
+        <td style="text-align:right">${nItems}</td>
+        <td><span class="badge ${diOrigenBadgeClass(r.tipo_origen)}">${diOrigenLabelShort(r.tipo_origen)}</span></td>
+        <td>${fmtDate((r.created_at||'').slice(0,10))}</td>
+        <td style="display:flex;gap:4px;flex-wrap:wrap">
+          <button class="btn small" data-action="ver-di" data-did="${r.id}">${diSelectedId===r.id?'Ocultar':'Ver detalle'}</button>
+          <button class="btn small" data-action="export-di-xlsx" data-did="${r.id}">Excel</button>
+          <button class="btn small" data-action="export-di-csv" data-did="${r.id}">CSV</button>
+          <button class="btn small danger" data-action="del-di" data-did="${r.id}">Eliminar</button>
+        </td>
+      </tr>`;
+    }).join('') || `<tr><td colspan="9"><div class="empty">Aún no se ha guardado ninguna lectura DI.</div></td></tr>`}</tbody>
+  </table></div>`;
+}
+
+function renderDiDetail(){
+  const dw = document.getElementById('diDetailWrap');
+  if(!dw) return;
+  if(!diSelectedId){ dw.innerHTML=''; return; }
+  const r = STATE.lecturasDi.find(x=>x.id===diSelectedId);
+  if(!r){ dw.innerHTML=''; return; }
+  const items = diItemsFor(r.id);
+  dw.innerHTML = `
+    <div class="panel">
+      <div class="panel-head">
+        <div><h2 style="font-size:15px">${esc(r.archivo_nombre||'Lectura DI')}</h2><div class="desc">Radicación ${esc(r.radicacion||'—')} · Subpartida ${esc(r.subpartida||'—')} · Cargada el ${fmtDate((r.created_at||'').slice(0,10))}</div></div>
+        <div style="display:flex;gap:8px">
+          ${r.storage_path?`<button class="btn small" id="diVerOriginal">Ver original</button>`:''}
+          <button class="btn small" id="diDetailClose">Cerrar</button>
+        </div>
+      </div>
+      <div class="panel-body">
+        <div class="table-scroll"><table class="grid">
+          <thead><tr><th>#</th><th>REF</th><th>Producto</th><th style="text-align:right">Cantidad</th></tr></thead>
+          <tbody>${items.map((it,idx)=>`<tr><td class="mono">${idx+1}</td><td class="mono">${esc(it.ref||'—')}</td><td>${esc(it.producto||'—')}</td><td style="text-align:right" class="mono">${it.cantidad!=null?it.cantidad:'—'}</td></tr>`).join('') || `<tr><td colspan="4"><div class="empty">Sin ítems.</div></td></tr>`}</tbody>
+        </table></div>
+        <p class="helptext" style="margin-top:10px">Cantidad total: ${items.reduce((s,it)=>s+(Number(it.cantidad)||0),0)} · ${items.length} ítem(s).</p>
+        <details style="margin-top:10px">
+          <summary style="cursor:pointer;font-size:12px;color:var(--text-muted)">Ver texto crudo extraído (para verificar manualmente)</summary>
+          <pre style="white-space:pre-wrap;font-size:11px;max-height:260px;overflow:auto;background:var(--bg);border:1px solid var(--border);padding:10px;border-radius:6px;margin-top:8px">${esc((r.texto_crudo||'').slice(0,6000))}</pre>
+        </details>
+      </div>
+    </div>
+  `;
+  const closeBtn = document.getElementById('diDetailClose');
+  if(closeBtn) closeBtn.addEventListener('click', ()=>{ diSelectedId=null; renderDiDetail(); renderLecturaDiHistory(); });
+  const verBtn = document.getElementById('diVerOriginal');
+  if(verBtn) verBtn.addEventListener('click', async ()=>{
+    verBtn.disabled = true;
+    try{
+      const {data, error} = await sb.storage.from(BUCKET_DI).createSignedUrl(r.storage_path, 60);
+      if(error || !data) throw error || new Error('sin URL');
+      window.open(data.signedUrl, '_blank');
+    }catch(err){
+      console.error(err);
+      toast('No se pudo abrir el archivo original', 'err');
+    } finally { verBtn.disabled = false; }
+  });
+}
+
+// Exportación a Excel/CSV — reutiliza XLSX (ya cargado para el resto de la app) para Excel, y un
+// generador simple propio para CSV (con BOM UTF-8 para que Excel abra bien las tildes/eñes).
+function exportRowsToXlsx(filename, rows, sheetName){
+  if(!rows.length){ toast('No hay datos para exportar','err'); return; }
+  const ws = XLSX.utils.json_to_sheet(rows);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, sheetName || 'Datos');
+  XLSX.writeFile(wb, filename);
+}
+function exportRowsToCsv(filename, rows){
+  if(!rows.length){ toast('No hay datos para exportar','err'); return; }
+  const cols = Object.keys(rows[0]);
+  const escCsv = (v) => {
+    if(v===null||v===undefined) return '';
+    const s = String(v);
+    return /[",\n;]/.test(s) ? '"'+s.replace(/"/g,'""')+'"' : s;
+  };
+  const lines = [cols.join(';'), ...rows.map(r=>cols.map(c=>escCsv(r[c])).join(';'))];
+  const csv = '﻿' + lines.join('\r\n');
+  const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+}
+function diRowsForExport(lectura){
+  const items = diItemsFor(lectura.id);
+  const base = {'RADICACIÓN': lectura.radicacion||'', 'SUBPARTIDA': lectura.subpartida||'', 'N° FACTURA': lectura.n_factura||'', 'FECHA': lectura.fecha_factura||'', 'BL': lectura.bl||''};
+  if(!items.length) return [{...base, 'REF':'', 'PRODUCTO':'', 'CANTIDAD':''}];
+  return items.map(it=>({...base, 'REF': it.ref||'', 'PRODUCTO': it.producto||'', 'CANTIDAD': it.cantidad!=null?it.cantidad:''}));
+}
+
+VIEWS.lecturadi = function(){
+  const el = document.getElementById('view-lecturadi');
+  el.innerHTML = `
+    <div class="panel">
+      <div class="panel-head">
+        <div><h2>Lectura DI</h2><div class="desc">Sube una foto/escaneo, un PDF digital, o un Excel ya transcrito de una Declaración de Importación (DIAN/MUISCA) para leer y tabular su encabezado (Radicación, Subpartida, N° Factura, Fecha) y el detalle de ítems (REF, producto, cantidad). Las fotos se procesan con reconocimiento de texto (OCR) directamente en el navegador y pueden fallar mucho con letra pequeña o apretada — si ya tienes el detalle transcrito en un Excel (con columnas tipo Referencia/Descripción/Cantidad), súbelo directamente: es el método más confiable. Un PDF digital con texto seleccionable también da mejores resultados que una foto. <strong>Revisa y corrige siempre antes de guardar</strong>, sea cual sea el origen.</div></div>
+      </div>
+      <div class="panel-body">
+        <div class="drop-zone" id="diDrop">
+          <strong>Arrastra una foto, PDF o Excel de la Declaración de Importación aquí</strong> o haz clic para seleccionar<br>
+          <input type="file" id="diInput" accept="image/*,application/pdf,.xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel" style="display:none">
+        </div>
+        <p class="helptext" id="diProgress" style="display:none;margin-top:10px"></p>
+        <div id="diPendingWrap" style="margin-top:16px"></div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-head">
+        <div><h2>Historial de lecturas</h2><div class="desc">Todas las Declaraciones de Importación guardadas, con su detalle de ítems. "Exportar todo" combina el historial completo en una sola fila por ítem (con Radicación/Subpartida/N° Factura/Fecha/BL repetidos), lista para trabajar en Excel.</div></div>
+        <div style="display:flex;gap:8px">
+          <button class="btn small" id="diExportAllXlsx">Exportar todo (Excel)</button>
+          <button class="btn small" id="diExportAllCsv">Exportar todo (CSV)</button>
+        </div>
+      </div>
+      <div class="panel-body flush" id="diHistoryWrap"></div>
+    </div>
+    <div id="diDetailWrap"></div>
+    <datalist id="dlBLsDi">${STATE.embarques.map(e=>`<option value="${esc(e.bl)}">`).join('')}</datalist>
+  `;
+
+  const drop = document.getElementById('diDrop');
+  const input = document.getElementById('diInput');
+  drop.addEventListener('click', ()=>input.click());
+  input.addEventListener('change', ()=>{ if(input.files[0]) handleDiFile(input.files[0]); input.value=''; });
+  ['dragenter','dragover'].forEach(evt=>drop.addEventListener(evt, e=>{ e.preventDefault(); drop.classList.add('drag'); }));
+  ['dragleave','drop'].forEach(evt=>drop.addEventListener(evt, e=>{ e.preventDefault(); drop.classList.remove('drag'); }));
+  drop.addEventListener('drop', e=>{ const f = e.dataTransfer.files[0]; if(f) handleDiFile(f); });
+
+  document.getElementById('diPendingWrap').addEventListener('click', (e)=>{
+    if(e.target.closest('#diAddItemRow')){
+      if(!pendingLecturaDi) return;
+      syncPendingItemsFromDom();
+      pendingLecturaDi.items.push({ref:'', producto:'', cantidad:null});
+      renderPendingLecturaDi();
+      return;
+    }
+    const delItemBtn = e.target.closest('[data-action="del-di-item"]');
+    if(delItemBtn){
+      syncPendingItemsFromDom();
+      pendingLecturaDi.items.splice(Number(delItemBtn.dataset.idx), 1);
+      renderPendingLecturaDi();
+      return;
+    }
+    const saveBtn = e.target.closest('[data-action="guardar-di"]');
+    if(saveBtn) saveLecturaDi();
+    const discardBtn = e.target.closest('[data-action="descartar-di"]');
+    if(discardBtn){ pendingLecturaDi = null; renderPendingLecturaDi(); }
+  });
+
+  document.getElementById('diHistoryWrap').addEventListener('click', async (e)=>{
+    const verBtn = e.target.closest('[data-action="ver-di"]');
+    if(verBtn){
+      diSelectedId = diSelectedId === verBtn.dataset.did ? null : verBtn.dataset.did;
+      renderLecturaDiHistory();
+      renderDiDetail();
+      return;
+    }
+    const xlsxBtn = e.target.closest('[data-action="export-di-xlsx"]');
+    if(xlsxBtn){
+      const lectura = STATE.lecturasDi.find(r=>r.id===xlsxBtn.dataset.did);
+      if(lectura) exportRowsToXlsx(`Lectura_DI_${lectura.radicacion||lectura.id}.xlsx`, diRowsForExport(lectura), 'Lectura DI');
+      return;
+    }
+    const csvBtn = e.target.closest('[data-action="export-di-csv"]');
+    if(csvBtn){
+      const lectura = STATE.lecturasDi.find(r=>r.id===csvBtn.dataset.did);
+      if(lectura) exportRowsToCsv(`Lectura_DI_${lectura.radicacion||lectura.id}.csv`, diRowsForExport(lectura));
+      return;
+    }
+    const delBtn = e.target.closest('[data-action="del-di"]');
+    if(delBtn){
+      if(!confirm('¿Eliminar esta lectura DI y todos sus ítems?')) return;
+      const ok = await DB.remove('impo_lecturas_di', delBtn.dataset.did);
+      if(ok){
+        STATE.lecturasDi = STATE.lecturasDi.filter(r=>r.id!==delBtn.dataset.did);
+        STATE.lecturasDiItems = STATE.lecturasDiItems.filter(it=>it.lectura_id!==delBtn.dataset.did);
+        if(diSelectedId===delBtn.dataset.did) diSelectedId = null;
+        renderLecturaDiHistory();
+        renderDiDetail();
+        toast('Lectura eliminada','ok');
+      }
+    }
+  });
+
+  document.getElementById('diExportAllXlsx').addEventListener('click', ()=>{
+    const rows = STATE.lecturasDi.flatMap(diRowsForExport);
+    exportRowsToXlsx(`Lecturas_DI_${todayISO()}.xlsx`, rows, 'Lecturas DI');
+  });
+  document.getElementById('diExportAllCsv').addEventListener('click', ()=>{
+    const rows = STATE.lecturasDi.flatMap(diRowsForExport);
+    exportRowsToCsv(`Lecturas_DI_${todayISO()}.csv`, rows);
+  });
+
+  renderPendingLecturaDi();
+  renderLecturaDiHistory();
+  renderDiDetail();
+};
+</script>
+
+<script>
+  window.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
+
